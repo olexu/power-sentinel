@@ -1,0 +1,22 @@
+version: "3.8"
+
+services:
+  power-sentinel:
+    build:
+      context: ./power-sentinel
+      dockerfile: Dockerfile
+      # Use linux/arm64 for Raspberry Pi OS 64-bit. Change to linux/arm/v7 for 32-bit.
+      platform: linux/arm64
+    image: powersentinel:latest
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    volumes:
+      - ./data:/data
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ConnectionStrings__Default=Data Source=/data/power-sentinel.db
+      - Telegram__BotToken=${TELEGRAM_BOT_TOKEN}
+      - Heartbeat__Secret=${HEARTBEAT_SECRET}
+      - Monitor__IntervalSeconds=30
+      - Monitor__HeartbeatTimeoutSeconds=60

@@ -1,0 +1,12 @@
+bin/
+obj/
+**/bin/
+**/obj/
+**/*.db
+.vs/
+.vscode/
+*.user
+*.suo
+*.nupkg
+publish/
+Dockerfile*

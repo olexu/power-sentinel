@@ -1,0 +1,22 @@
+# Visual Studio / .NET
+bin/
+obj/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+TestResults/
+*.vs/
+.vscode/
+*.db
+*.pdb
+publish/
+npm-debug.log
+*.nupkg
+artifacts/
+
+# Rider
+.idea/
+
+# OS
+.DS_Store
