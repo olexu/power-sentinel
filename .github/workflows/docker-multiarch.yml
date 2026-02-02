@@ -2,7 +2,7 @@ name: Build and push multi-arch Docker images
 
 on:
   push:
-    branches: ["main", "master"]
+    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -13,7 +13,6 @@ jobs:
   build-dockerhub:
     name: Build & push to Docker Hub (optional)
     runs-on: ubuntu-latest
-    if: ${{ secrets.DOCKERHUB_USERNAME != '' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v5
@@ -27,11 +26,11 @@ jobs:
       - name: Log in to Docker Hub
         uses: docker/login-action@v3
         with:
-          registry: docker.io
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Build and push multi-arch image to Docker Hub
+        if: ${{ secrets.DOCKERHUB_USERNAME != '' }}
         uses: docker/build-push-action@v6
         with:
           context: .
