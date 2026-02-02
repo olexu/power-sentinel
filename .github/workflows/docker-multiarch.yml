@@ -30,7 +30,6 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Build and push multi-arch image to Docker Hub
-        if: ${{ secrets.DOCKERHUB_USERNAME != '' }}
         uses: docker/build-push-action@v6
         with:
           context: .
