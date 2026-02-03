@@ -92,14 +92,14 @@ public class TelegramBotService : BackgroundService, ITelegramBotService
                 dbCb.Subscribers.Add(existingSub);
             }
 
-            if (data == "subscribe_all")
+                if (data == "subscribe_all")
             {
                 existingSub.DeviceId = null;
                 existingSub.IsActive = true;
                 await dbCb.SaveChangesAsync(ct);
-                await botClient.AnswerCallbackQuery(cq.Id, "Підписка: всі", cancellationToken: ct);
+                await botClient.AnswerCallbackQuery(cq.Id, "Subscribed: all", cancellationToken: ct);
                 if (cq.Message != null)
-                    await botClient.EditMessageText(cq.Message.Chat.Id, cq.Message.MessageId, "Підписка: всі", cancellationToken: ct);
+                    await botClient.EditMessageText(cq.Message.Chat.Id, cq.Message.MessageId, "Subscribed: all", cancellationToken: ct);
                 return;
             }
 
@@ -109,21 +109,20 @@ public class TelegramBotService : BackgroundService, ITelegramBotService
                 var dev = await dbCb.Devices.FindAsync(new object[] { deviceId }, ct);
                 if (dev == null)
                 {
-                    await botClient.AnswerCallbackQuery(cq.Id, "Пристрій не знайдено", cancellationToken: ct);
+                    await botClient.AnswerCallbackQuery(cq.Id, "Device not found", cancellationToken: ct);
                     return;
                 }
 
                 existingSub.DeviceId = dev.Id;
                 existingSub.IsActive = true;
                 await dbCb.SaveChangesAsync(ct);
-                string confirmText = $"Підписка: {WebUtility.HtmlEncode(dev.Description ?? dev.Id)}.";
+                string confirmText = $"Subscribed: {WebUtility.HtmlEncode(dev.Description ?? dev.Id)}.";
                 if (!string.IsNullOrWhiteSpace(_opts.PublicUrl))
                 {
                     var url = _opts.PublicUrl!.TrimEnd('/') + "/?deviceId=" + Uri.EscapeDataString(dev.Id);
-                    confirmText += "\n🔗 " + $"<a href=\"{WebUtility.HtmlEncode(url)}\">Статистика відключень</a>";
+                    confirmText += "\n🔗 " + $"<a href=\"{WebUtility.HtmlEncode(url)}\">Outage Statistics</a>";
                 }
-
-                await botClient.AnswerCallbackQuery(cq.Id, $"Підписка: {dev.Description ?? dev.Id}", cancellationToken: ct);
+                await botClient.AnswerCallbackQuery(cq.Id, $"Subscribed: {dev.Description ?? dev.Id}", cancellationToken: ct);
                 if (cq.Message != null)
                     await botClient.EditMessageText(cq.Message.Chat.Id, cq.Message.MessageId, confirmText, parseMode: ParseMode.Html, cancellationToken: ct);
                 return;
@@ -141,7 +140,7 @@ public class TelegramBotService : BackgroundService, ITelegramBotService
         using var scope = _services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
-        if (text.StartsWith("/start"))
+            if (text.StartsWith("/start"))
         {
             var existing = await db.Subscribers.FirstOrDefaultAsync(s => s.ChatId == chatId, ct);
             if (existing == null)
@@ -155,7 +154,7 @@ public class TelegramBotService : BackgroundService, ITelegramBotService
                 await db.SaveChangesAsync(ct);
             }
 
-            await botClient.SendMessage(chatId, "Підписано. /stop — відписка · /devices — список · /status", cancellationToken: ct);
+            await botClient.SendMessage(chatId, "Subscribed. /stop — unsubscribe · /devices — list · /status", cancellationToken: ct);
         }
         else if (text.StartsWith("/stop"))
         {
@@ -166,26 +165,26 @@ public class TelegramBotService : BackgroundService, ITelegramBotService
                 await db.SaveChangesAsync(ct);
             }
 
-            await botClient.SendMessage(chatId, "Ви відписані.", cancellationToken: ct);
+            await botClient.SendMessage(chatId, "You are unsubscribed.", cancellationToken: ct);
         }
         else if (text.StartsWith("/devices"))
         {
             var devices = await db.Devices.OrderBy(d => d.Id).ToListAsync(ct);
                 if (devices.Count == 0)
                 {
-                    await botClient.SendMessage(chatId, "Пристроїв немає.", cancellationToken: ct);
+                    await botClient.SendMessage(chatId, "No devices.", cancellationToken: ct);
                 }
                 else
                 {
                 // build inline keyboard with one button per device
                 var buttons = devices.Select(d => new[] { InlineKeyboardButton.WithCallbackData($"{d.Description ?? d.Id}", $"subscribe:{d.Id}") }).ToArray();
                 // add a button to subscribe to all devices
-                var allButton = new[] { InlineKeyboardButton.WithCallbackData("Усі пристрої", "subscribe_all") };
+                var allButton = new[] { InlineKeyboardButton.WithCallbackData("All devices", "subscribe_all") };
                 var keyboardRows = new List<InlineKeyboardButton[]> { allButton };
                 keyboardRows.AddRange(buttons);
                 var keyboard = new InlineKeyboardMarkup(keyboardRows);
 
-                await botClient.SendMessage(chatId, "Список пристроїв — оберіть, щоб підписатися.", replyMarkup: keyboard, cancellationToken: ct);
+                await botClient.SendMessage(chatId, "Device list — select to subscribe.", replyMarkup: keyboard, cancellationToken: ct);
             }
         }
         else if (text.StartsWith("/subscribe"))
@@ -215,7 +214,7 @@ public class TelegramBotService : BackgroundService, ITelegramBotService
 
                 if (dev == null)
                 {
-                    await botClient.SendMessage(chatId, "Пристрій не знайдено.", cancellationToken: ct);
+                    await botClient.SendMessage(chatId, "Device not found.", cancellationToken: ct);
                     return;
                 }
 
@@ -239,16 +238,16 @@ public class TelegramBotService : BackgroundService, ITelegramBotService
             string response;
             if (deviceId == null)
             {
-                response = "Підписка: всі";
+                response = "Subscribed: all";
                 await botClient.SendMessage(chatId, response, cancellationToken: ct);
             }
             else
             {
-                response = $"Підписка: {WebUtility.HtmlEncode(deviceId)}.";
+                response = $"Subscribed: {WebUtility.HtmlEncode(deviceId)}.";
                 if (!string.IsNullOrWhiteSpace(_opts.PublicUrl))
                 {
                     var url = _opts.PublicUrl!.TrimEnd('/') + "/?deviceId=" + Uri.EscapeDataString(deviceId);
-                    response += "\n🔗 " + $"<a href=\"{WebUtility.HtmlEncode(url)}\">Статистика</a>";
+                    response += "\n🔗 " + $"<a href=\"{WebUtility.HtmlEncode(url)}\">Statistics</a>";
                     await botClient.SendMessage(chatId, response, parseMode: ParseMode.Html, cancellationToken: ct);
                 }
                 else
@@ -262,24 +261,24 @@ public class TelegramBotService : BackgroundService, ITelegramBotService
             var existing = await db.Subscribers.FirstOrDefaultAsync(s => s.ChatId == chatId, ct);
             if (existing == null || !existing.IsActive)
             {
-                await botClient.SendMessage(chatId, "Ви не підписані.", cancellationToken: ct);
+                await botClient.SendMessage(chatId, "You are not subscribed.", cancellationToken: ct);
                 return;
             }
 
             if (string.IsNullOrWhiteSpace(existing.DeviceId))
             {
-                await botClient.SendMessage(chatId, "Поточна підписка: всі", cancellationToken: ct);
+                await botClient.SendMessage(chatId, "Current subscription: all", cancellationToken: ct);
             }
             else
             {
                 var dev = await db.Devices.FindAsync(new object[] { existing.DeviceId }, ct);
                 var desc = dev != null ? (dev.Description ?? dev.Id) : existing.DeviceId;
-                await botClient.SendMessage(chatId, $"Поточна підписка: {desc} (id:{existing.DeviceId})", cancellationToken: ct);
+                await botClient.SendMessage(chatId, $"Current subscription: {desc} (id:{existing.DeviceId})", cancellationToken: ct);
             }
         }
         else
         {
-            await botClient.SendMessage(chatId, "Доступні команди: /start, /stop", cancellationToken: ct);
+            await botClient.SendMessage(chatId, "Available commands: /start, /stop", cancellationToken: ct);
         }
     }
 
@@ -305,17 +304,10 @@ public class TelegramBotService : BackgroundService, ITelegramBotService
         }
 
         if (isOn)
-            text = $"{dot} {deviceText} увімкнено.\n⏱️ Світла не було: {durText}.";
+            text = $"{dot} {deviceText} ON.\n⏱️ Outage: {durText}.";
         else
-            text = $"{dot} {deviceText} вимкнено.\n⏱️ Світло було: {durText}.";
+            text = $"{dot} {deviceText} OFF.\n⏱️ Uptime: {durText}.";
 
-        // add link to web UI for this device if configured
-        if (!string.IsNullOrWhiteSpace(deviceId) && !string.IsNullOrWhiteSpace(_opts.PublicUrl))
-        {
-            var url = _opts.PublicUrl!.TrimEnd('/') + "/?deviceId=" + Uri.EscapeDataString(deviceId);
-            text += " \n🔗 " + $"<a href=\"{WebUtility.HtmlEncode(url)}\">Статистика відключень</a>";
-        }
- 
         using var scope = _services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         // send to subscribers who are active and either subscribed to all (DeviceId == null)

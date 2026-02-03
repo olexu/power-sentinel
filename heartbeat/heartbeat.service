@@ -1,0 +1,17 @@
+[Unit]
+Description=Heartbeat sender (posts every 15s)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+# Optional environment file; leading '-' ignores if missing
+EnvironmentFile=-/etc/default/heartbeat
+ExecStart=/usr/bin/env bash /opt/heartbeat/heartbeat.sh
+Restart=always
+RestartSec=5
+SyslogIdentifier=heartbeat-sender
+User=root
+
+[Install]
+WantedBy=multi-user.target

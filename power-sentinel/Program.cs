@@ -1,5 +1,4 @@
 using Microsoft.EntityFrameworkCore;
-using System.Globalization;
 using PowerSentinel.Data;
 using PowerSentinel.Services;
 
@@ -9,28 +8,30 @@ var builder = WebApplication.CreateBuilder(args);
 var urls = Environment.GetEnvironmentVariable("ASPNETCORE_URLS") ?? "http://*:5001";
 builder.WebHost.UseUrls(urls);
 
-// Set default culture to Ukrainian so month names and date formats are shown in Ukrainian
-var ukCulture = new CultureInfo("uk-UA");
-CultureInfo.DefaultThreadCurrentCulture = ukCulture;
-CultureInfo.DefaultThreadCurrentUICulture = ukCulture;
-
 builder.Services.AddRazorPages();
 builder.Services.AddControllers();
 
-var connectionString = builder.Configuration.GetConnectionString("Default") ?? "Data Source=power-sentinel.db";
+var connectionString = builder.Configuration["DatabaseConnectionString"] ?? "Data Source=power-sentinel.db";
 builder.Services.AddDbContext<AppDbContext>(options => options.UseSqlite(connectionString));
 
-builder.Services.Configure<MonitorOptions>(builder.Configuration.GetSection("Monitor"));
-builder.Services.Configure<HeartbeatOptions>(builder.Configuration.GetSection("Heartbeat"));
-builder.Services.Configure<TelegramOptions>(builder.Configuration.GetSection("Telegram"));
-
-builder.Services.PostConfigure<TelegramOptions>(opts =>
+builder.Services.Configure<MonitorOptions>(opts =>
 {
+    opts.IntervalSeconds = builder.Configuration.GetValue<int?>("MonitorIntervalSeconds") ?? opts.IntervalSeconds;
+    opts.HeartbeatTimeoutSeconds = builder.Configuration.GetValue<int?>("MonitorTimeoutSeconds") ?? opts.HeartbeatTimeoutSeconds;
+});
+
+builder.Services.Configure<HeartbeatOptions>(opts =>
+{
+    var heartbeatToken = builder.Configuration["HeartbeatToken"];
+    if (!string.IsNullOrEmpty(heartbeatToken)) opts.HeartbeatToken = heartbeatToken;
+});
+
+builder.Services.Configure<TelegramOptions>(opts =>
+{
+    var botToken = builder.Configuration["TelegramBotToken"];
+    if (!string.IsNullOrWhiteSpace(botToken)) opts.BotToken = botToken;
     var publicUrl = builder.Configuration["PublicUrl"];
-    if (!string.IsNullOrEmpty(publicUrl))
-    {
-        opts.PublicUrl = publicUrl;
-    }
+    if (!string.IsNullOrEmpty(publicUrl)) opts.PublicUrl = publicUrl;
 });
 builder.Services.AddSingleton<TelegramBotService>();
 builder.Services.AddSingleton<ITelegramBotService>(sp => sp.GetRequiredService<TelegramBotService>());

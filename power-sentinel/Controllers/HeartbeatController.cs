@@ -23,14 +23,14 @@ public class HeartbeatController : ControllerBase
     public async Task<IActionResult> Post([FromBody] HeartbeatDto dto)
     {
         // If a secret is configured, require the client to send it in the X-Heartbeat-Token header.
-        if (!string.IsNullOrWhiteSpace(_hbOpts.Secret))
+        if (!string.IsNullOrWhiteSpace(_hbOpts.HeartbeatToken))
         {
             if (!Request.Headers.TryGetValue("X-Heartbeat-Token", out var token) || string.IsNullOrEmpty(token))
             {
                 return Unauthorized("missing heartbeat token");
             }
 
-            if (!string.Equals(token.ToString(), _hbOpts.Secret, StringComparison.Ordinal))
+            if (!string.Equals(token.ToString(), _hbOpts.HeartbeatToken, StringComparison.Ordinal))
             {
                 return Unauthorized("invalid heartbeat token");
             }

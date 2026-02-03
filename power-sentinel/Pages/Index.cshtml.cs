@@ -30,7 +30,7 @@ public class IndexModel : PageModel
     public double MaxOutageSeconds { get; private set; }
     // retained for internal use but not shown directly in new summary
     public double UptimePercent { get; private set; }
-    
+
 
     // Devices for selector
     public List<Device> Devices { get; private set; } = new();
@@ -81,15 +81,7 @@ public class IndexModel : PageModel
             DeviceStatuses[d.Id] = lastEv != null && lastEv.EndAt == null ? (bool?)lastEv.IsPowerOn : null;
         }
 
-        // localized month name (Ukrainian locale)
-        try
-        {
-            MonthName = monthStart.ToString("MMMM yyyy", new CultureInfo("uk-UA"));
-        }
-        catch
-        {
-            MonthName = monthStart.ToString("MMMM yyyy");
-        }
+        MonthName = monthStart.ToString("MMMM yyyy");
 
         // get events that intersect the month range (EndAt null means ongoing)
         var eventsQuery = _db.Events

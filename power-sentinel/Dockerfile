@@ -16,6 +16,6 @@ COPY --from=build /app/publish ./
 
 # persist sqlite DB outside the container
 VOLUME ["/data"]
-ENV ConnectionStrings__Default="Data Source=/data/power-sentinel.db"
+ENV DatabaseConnectionString="Data Source=/data/power-sentinel.db"
 EXPOSE 80
 ENTRYPOINT ["dotnet", "power-sentinel.dll"]
