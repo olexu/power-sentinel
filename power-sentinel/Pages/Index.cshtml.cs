@@ -43,42 +43,39 @@ public class IndexModel : PageModel
     public async Task OnGetAsync(int? year, int? month, string? deviceId)
     {
         var now = DateTime.Now;
+
         Year = year ?? now.Year;
         Month = month ?? now.Month;
         SelectedDeviceId = string.IsNullOrWhiteSpace(deviceId) ? null : deviceId;
-        var monthStart = new DateTime(Year, Month, 1, 0, 0, 0, DateTimeKind.Local);
+
+        var monthStart = new DateTime(Year, Month, 1, 0, 0, 0);
         var monthEnd = monthStart.AddMonths(1);
 
-        // load devices for selector
         Devices = await _db.Devices.OrderBy(d => d.Id).ToListAsync();
 
-        // If no device specified, select the first available device by default
         if (SelectedDeviceId == null && Devices.Count > 0)
-        {
             SelectedDeviceId = Devices[0].Id;
-        }
 
-        // determine selected device current state (based on latest event for that device)
-        if (SelectedDeviceId != null)
-        {
-            var last = await _db.Events
-                .Where(e => e.DeviceId == SelectedDeviceId)
-                .OrderByDescending(e => e.StartAt)
-                .FirstOrDefaultAsync();
-
-            SelectedDeviceIsOn = last != null && last.EndAt == null && last.IsPowerOn;
-        }
-
-        // load per-device current status
         DeviceStatuses = new Dictionary<string, bool?>();
-        foreach (var d in Devices)
+        if (Devices.Count > 0)
         {
-            var lastEv = await _db.Events
-                .Where(e => e.DeviceId == d.Id)
-                .OrderByDescending(e => e.StartAt)
-                .FirstOrDefaultAsync();
+            var deviceIds = Devices.Select(d => d.Id).ToList();
+            var lastEvents = await _db.Events
+                .Where(e => deviceIds.Contains(e.DeviceId))
+                .GroupBy(e => e.DeviceId)
+                .Select(g => g.OrderByDescending(e => e.StartAt).FirstOrDefault())
+                .ToListAsync();
 
-            DeviceStatuses[d.Id] = lastEv != null && lastEv.EndAt == null ? (bool?)lastEv.IsPowerOn : null;
+            foreach (var d in Devices)
+            {
+                var lastEv = lastEvents.FirstOrDefault(e => e != null && e.DeviceId == d.Id);
+                DeviceStatuses[d.Id] = lastEv != null && lastEv.EndAt == null ? (bool?)lastEv.IsPowerOn : null;
+            }
+
+            if (SelectedDeviceId != null)
+            {
+                SelectedDeviceIsOn = DeviceStatuses.ContainsKey(SelectedDeviceId) ? DeviceStatuses[SelectedDeviceId] : null;
+            }
         }
 
         MonthName = monthStart.ToString("MMMM yyyy");
@@ -99,15 +96,14 @@ public class IndexModel : PageModel
         MaxOutageSeconds = 0;
         var outageByDevice = new Dictionary<string, double>();
 
-        var nowLocal = DateTime.Now;
-        var periodEnd = nowLocal < monthEnd ? nowLocal : monthEnd; // month up to current day/time
+        var periodEnd = now < monthEnd ? now : monthEnd; // month up to current day/time
         var periodSeconds = (periodEnd - monthStart).TotalSeconds;
         var elapsedDays = (periodEnd - monthStart).TotalDays;
 
         foreach (var ev in events)
         {
-            var evStart = ev.StartAt.Kind == DateTimeKind.Local ? ev.StartAt : ev.StartAt.ToLocalTime();
-            var evEnd = ev.EndAt.HasValue ? (ev.EndAt.Value.Kind == DateTimeKind.Local ? ev.EndAt.Value : ev.EndAt.Value.ToLocalTime()) : DateTime.Now;
+            var evStart = ev.StartAt;
+            var evEnd = ev.EndAt.HasValue ? ev.EndAt.Value : now;
             if (evEnd <= monthStart || evStart >= periodEnd) continue;
 
             var overlapStart = evStart < monthStart ? monthStart : evStart;
@@ -127,14 +123,14 @@ public class IndexModel : PageModel
             }
         }
 
-        UptimePercent = periodSeconds > 0 ? (TotalUptimeSeconds / periodSeconds) * 100.0 : 0.0;
+        UptimePercent = periodSeconds > 0 ? TotalUptimeSeconds / periodSeconds * 100.0 : 0.0;
         AvgOutageSeconds = OutageCount > 0 ? TotalDowntimeSeconds / OutageCount : 0.0;
 
         int daysInMonth = DateTime.DaysInMonth(Year, Month);
 
         for (int d = 1; d <= daysInMonth; d++)
         {
-            var dayStart = new DateTime(Year, Month, d, 0, 0, 0, DateTimeKind.Local);
+            var dayStart = new DateTime(Year, Month, d, 0, 0, 0);
             var dayEnd = dayStart.AddDays(1);
 
             double onSeconds = 0;
@@ -142,8 +138,8 @@ public class IndexModel : PageModel
 
             foreach (var ev in events)
             {
-                var evStart = ev.StartAt.Kind == DateTimeKind.Local ? ev.StartAt : ev.StartAt.ToLocalTime();
-                var evEnd = ev.EndAt.HasValue ? (ev.EndAt.Value.Kind == DateTimeKind.Local ? ev.EndAt.Value : ev.EndAt.Value.ToLocalTime()) : DateTime.Now;
+                var evStart = ev.StartAt;
+                var evEnd = ev.EndAt.HasValue ? ev.EndAt.Value : now;
 
                 if (evEnd <= dayStart || evStart >= dayEnd) continue;
 
