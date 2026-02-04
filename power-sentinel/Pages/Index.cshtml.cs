@@ -35,7 +35,8 @@ public class IndexModel : PageModel
         SelectedDeviceId = string.IsNullOrWhiteSpace(deviceId) ? null : deviceId;
 
         var filterDateTimeStart = new DateTime(Year, Month, 1, 0, 0, 0);
-        var filterDateTimeEnd = filterDateTimeStart.AddMonths(1);
+        var monthEnd = filterDateTimeStart.AddMonths(1);
+        var filterDateTimeEnd = dateTimeNow < monthEnd ? dateTimeNow : monthEnd;
 
         MonthName = filterDateTimeStart.ToString("MMMM yyyy");
 
@@ -51,74 +52,68 @@ public class IndexModel : PageModel
         }
 
         var events = await _db.Events.AsQueryable()
-            .Where(e => 
-                e.DeviceId == SelectedDeviceId && 
-                ((e.StartAt >= filterDateTimeStart && e.StartAt < filterDateTimeEnd) || (e.EndAt != null && e.EndAt >= filterDateTimeStart && e.EndAt < filterDateTimeEnd)))
+            .Where(e =>
+                e.DeviceId == SelectedDeviceId && (
+                    (e.StartAt >= filterDateTimeStart && e.StartAt < filterDateTimeEnd) ||
+                    (e.EndAt == null) ||
+                    (e.EndAt != null && e.EndAt >= filterDateTimeStart && e.EndAt < filterDateTimeEnd)
+                ))
+                .OrderBy(e => e.StartAt)
             .ToListAsync();
+
+        TotalUptimeSeconds = 0;
+        TotalDowntimeSeconds = 0;
 
         for (int d = 1; d <= DateTime.DaysInMonth(Year, Month); d++)
         {
-            var dayStart = new DateTime(Year, Month, d, 0, 0, 0);
-            var dayEnd = dayStart.AddDays(1);
+            var dateTimeStart = new DateTime(Year, Month, d, 0, 0, 0);
+            var dateTimeEnd = dateTimeStart.AddDays(1);
 
             double onSeconds = 0;
             double offSeconds = 0;
 
             foreach (var ev in events)
             {
-                var evStart = ev.StartAt < dayStart ? dayStart : ev.StartAt;
-                var evEnd = ev.EndAt.HasValue ? ev.EndAt > dayEnd ? dayEnd : ev.EndAt.Value : dateTimeNow;
+                if (ev.StartAt >= dateTimeEnd || ev.EndAt.HasValue && ev.EndAt <= dateTimeStart) continue;
+
+                var evStart = ev.StartAt < dateTimeStart ? dateTimeStart : ev.StartAt;
+                var evEnd = ev.EndAt.HasValue ? (ev.EndAt > dateTimeEnd ? dateTimeEnd : ev.EndAt.Value) : (dateTimeNow < dateTimeEnd ? dateTimeNow : dateTimeEnd);
 
                 var seconds = (evEnd - evStart).TotalSeconds;
                 if (seconds > 0)
                 {
                     if (ev.IsPowerOn)
+                    {
                         onSeconds += seconds;
+                        TotalUptimeSeconds += seconds;
+                    }
                     else
+                    {
                         offSeconds += seconds;
+                        TotalDowntimeSeconds += seconds;
+                    }
                 }
             }
-            Days.Add(new DayStat(dayStart, onSeconds, offSeconds));
+            Days.Add(new DayStat(dateTimeStart, onSeconds, offSeconds));
         }
 
-
-
-        TotalDowntimeSeconds = 0;
-        TotalUptimeSeconds = 0;
         OutageCount = 0;
         MaxOutageSeconds = 0;
 
-        var outageByDevice = new Dictionary<string, double>();
-        var periodEnd = dateTimeNow < filterDateTimeEnd ? dateTimeNow : filterDateTimeEnd; // month up to current day/time
-        var periodSeconds = (periodEnd - filterDateTimeStart).TotalSeconds;
-        var elapsedDays = (periodEnd - filterDateTimeStart).TotalDays;
-
         foreach (var ev in events)
         {
+            if (ev.IsPowerOn || ev.StartAt < filterDateTimeStart || ev.StartAt > filterDateTimeEnd) continue;
+
+            OutageCount++;
             var evStart = ev.StartAt;
-            var evEnd = ev.EndAt.HasValue ? ev.EndAt.Value : dateTimeNow;
-            if (evEnd <= filterDateTimeStart || evStart >= periodEnd) continue;
+            var evEnd = ev.EndAt.HasValue ? (ev.EndAt > filterDateTimeEnd ? filterDateTimeEnd : ev.EndAt.Value) : filterDateTimeEnd;
 
-            var overlapStart = evStart < filterDateTimeStart ? filterDateTimeStart : evStart;
-            var overlapEnd = evEnd > periodEnd ? periodEnd : evEnd;
-            var seconds = (overlapEnd - overlapStart).TotalSeconds;
-            if (seconds <= 0) continue;
-
-            if (ev.IsPowerOn) TotalUptimeSeconds += seconds;
-            else
-            {
-                TotalDowntimeSeconds += seconds;
-                OutageCount++;
-                var did = ev.DeviceId ?? string.Empty;
-                if (!outageByDevice.ContainsKey(did)) outageByDevice[did] = 0;
-                outageByDevice[did] += seconds;
-                if (seconds > MaxOutageSeconds) MaxOutageSeconds = seconds;
-            }
+            var seconds = (evEnd - evStart).TotalSeconds;
+            if (seconds > MaxOutageSeconds) MaxOutageSeconds = seconds;
         }
 
+        var periodSeconds = (filterDateTimeEnd - filterDateTimeStart).TotalSeconds;
         UptimePercent = periodSeconds > 0 ? TotalUptimeSeconds / periodSeconds * 100.0 : 0.0;
         AvgOutageSeconds = OutageCount > 0 ? TotalDowntimeSeconds / OutageCount : 0.0;
-
-
     }
 }
