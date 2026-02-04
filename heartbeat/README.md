@@ -3,7 +3,7 @@ Heartbeat sender service
 
 Files in this folder:
 
-- `heartbeat.sh` — the script that POSTs a JSON payload every 15 seconds.
+- `heartbeat.sh` — the script that POSTs a JSON payload every XX seconds.
 - `heartbeat.service` — systemd unit file (template) that runs the script at boot.
 
 Quick install on your Raspberry Pi (run as root or prefix with `sudo`):
@@ -21,6 +21,6 @@ chmod +x /opt/heartbeat/heartbeat.sh
 
 # move unit into place, reload, enable and start
 mv /tmp/heartbeat.service /etc/systemd/system/heartbeat.service
+
 systemctl daemon-reload
 systemctl enable --now heartbeat.service
-

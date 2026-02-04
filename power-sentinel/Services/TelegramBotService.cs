@@ -8,6 +8,7 @@ using Telegram.Bot.Types;
 using System.Net;
 using Telegram.Bot.Types.Enums;
 using Telegram.Bot.Types.ReplyMarkups;
+using Microsoft.Extensions.Logging;
 
 namespace PowerSentinel.Services;
 
@@ -29,10 +30,13 @@ public class TelegramBotService : BackgroundService, ITelegramBotService
     private readonly IServiceProvider _services;
     private TelegramBotClient? _client;
 
-    public TelegramBotService(IOptions<TelegramOptions> opts, IServiceProvider services)
+    private readonly ILogger<TelegramBotService>? _logger;
+
+    public TelegramBotService(IOptions<TelegramOptions> opts, IServiceProvider services, ILogger<TelegramBotService> logger)
     {
         _opts = opts.Value;
         _services = services;
+        _logger = logger;
     }
 
     public override Task StartAsync(CancellationToken cancellationToken)
@@ -40,6 +44,11 @@ public class TelegramBotService : BackgroundService, ITelegramBotService
         if (!string.IsNullOrWhiteSpace(_opts.BotToken))
         {
             _client = new TelegramBotClient(_opts.BotToken!);
+            _logger?.LogInformation("Telegram bot client created.");
+        }
+        else
+        {
+            _logger?.LogWarning("Telegram bot token not configured; Telegram polling disabled.");
         }
 
         return base.StartAsync(cancellationToken);
@@ -55,6 +64,7 @@ public class TelegramBotService : BackgroundService, ITelegramBotService
         };
 
         _client.StartReceiving(HandleUpdateAsync, HandlePollingErrorAsync, receiverOptions, stoppingToken);
+        _logger?.LogInformation("Telegram polling started.");
 
         try
         {
@@ -70,7 +80,8 @@ public class TelegramBotService : BackgroundService, ITelegramBotService
 
     private Task HandlePollingErrorAsync(ITelegramBotClient botClient, Exception exception, CancellationToken ct)
     {
-        // swallow for now
+        // Log polling errors for diagnosis
+        _logger?.LogError(exception, "Telegram polling error");
         return Task.CompletedTask;
     }
 
