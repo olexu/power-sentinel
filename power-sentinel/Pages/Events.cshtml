@@ -1,40 +1,23 @@
 @page
 @model PowerSentinel.Pages.EventsModel
 
-<div class="space-y-2">
+<a href="/Statistic?deviceId=@Model.DeviceId">
+@await Html.PartialAsync("_DeviceInfo", @Model.DeviceInfo)
+</a>
+
+<div class="space-y-2 mt-2">
   <header class="flex items-center justify-between">
     <div>
       <h2 class="text-xl font-semibold text-slate-800">Events</h2>
     </div>
     <div>
       <form method="get" class="flex items-center gap-2">
-        <input type="hidden" name="deviceId" value="@Model.SelectedDeviceId" />
+        <input type="hidden" name="deviceId" value="@Model.DeviceId" />
         <input type="date" name="date" value="@(Model.FilterDate.ToString("yyyy-MM-dd") ?? string.Empty)" class="border rounded px-2 py-1 text-sm" />
         <button class="px-3 py-1 bg-white border rounded text-sm">Filter</button>
       </form>
     </div>
   </header>
-
-  <section>
-    <div class="overflow-x-auto">
-      <div class="flex flex-col gap-2 items-start w-full">
-        @foreach (var d in Model.Devices)
-        {
-          var isSelected = d.Id == Model.SelectedDeviceId;
-          bool? devStatus = null;
-          if (Model.DeviceStatuses != null && Model.DeviceStatuses.ContainsKey(d.Id)) devStatus = Model.DeviceStatuses[d.Id];
-          var dotClass = devStatus == true ? "bg-emerald-500" : devStatus == false ? "bg-red-500" : "bg-gray-300";
-          var deviceLabel = string.IsNullOrWhiteSpace(d.Description) ? d.Id : d.Description;
-          var deviceBg = devStatus == true ? "bg-emerald-50" : devStatus == false ? "bg-red-50" : "bg-white";
-          var selectedClass = isSelected ? deviceBg + " border-sky-300" : deviceBg;
-          <a href="?deviceId=@d.Id&date="@Model.FilterDate.ToString("yyyy-MM-dd")" class="flex items-center gap-3 px-3 py-2 rounded-lg border w-full @(selectedClass)">
-            <div class="w-3 h-3 rounded-full @(dotClass)" aria-hidden="true"></div>
-            <div class="text-sm text-slate-700">@(deviceLabel)</div>
-          </a>
-        }
-      </div>
-    </div>
-  </section>
 
   <section>
     <div class="overflow-x-auto bg-white border rounded">
@@ -60,16 +43,16 @@
                     <td class="px-3 py-2">
                       @if (evd.IsPowerOn)
                       {
-                        <span class="inline-flex items-center gap-2 bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded text-xs font-medium">
+                        <span class="inline-flex items-center gap-1 bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded text-xs font-medium">
                           <span class="w-2 h-2 rounded-full bg-emerald-600" aria-hidden="true"></span>
-                          On
+                          ON
                         </span>
                       }
                       else
                       {
-                        <span class="inline-flex items-center gap-2 bg-red-100 text-red-800 px-2 py-0.5 rounded text-xs font-medium">
+                        <span class="inline-flex items-center gap-1 bg-red-100 text-red-800 px-2 py-0.5 rounded text-xs font-medium">
                           <span class="w-2 h-2 rounded-full bg-red-600" aria-hidden="true"></span>
-                          Off
+                          OFF
                         </span>
                       }
                     </td>

@@ -8,42 +8,36 @@ using Telegram.Bot.Types;
 using System.Net;
 using Telegram.Bot.Types.Enums;
 using Telegram.Bot.Types.ReplyMarkups;
-using Microsoft.Extensions.Logging;
+using PowerSentinel.Helpers;
 
 namespace PowerSentinel.Services;
 
-public class TelegramOptions
-{
-    public string? BotToken { get; set; }
-    // optional public application URL used to build links to the web UI
-    public string? PublicUrl { get; set; }
-}
-
 public interface ITelegramBotService
 {
-    Task SendPowerNotificationAsync(bool isOn, TimeSpan? previousDuration, string? deviceId = null, CancellationToken ct = default);
+    Task SendPowerNotificationAsync(bool isOn, string deviceId, string description, TimeSpan? previousDuration, CancellationToken ct = default);
 }
 
 public class TelegramBotService : BackgroundService, ITelegramBotService
 {
-    private readonly TelegramOptions _opts;
+    private readonly IConfiguration _configuration;
     private readonly IServiceProvider _services;
     private TelegramBotClient? _client;
 
     private readonly ILogger<TelegramBotService>? _logger;
 
-    public TelegramBotService(IOptions<TelegramOptions> opts, IServiceProvider services, ILogger<TelegramBotService> logger)
+    public TelegramBotService(IConfiguration configuration, IServiceProvider services, ILogger<TelegramBotService> logger)
     {
-        _opts = opts.Value;
+        _configuration = configuration;
         _services = services;
         _logger = logger;
     }
 
     public override Task StartAsync(CancellationToken cancellationToken)
     {
-        if (!string.IsNullOrWhiteSpace(_opts.BotToken))
+        var telegramBotToken = _configuration["TelegramBotToken"];
+        if (!string.IsNullOrWhiteSpace(telegramBotToken))
         {
-            _client = new TelegramBotClient(_opts.BotToken!);
+            _client = new TelegramBotClient(telegramBotToken);
             _logger?.LogInformation("Telegram bot client created.");
         }
         else
@@ -103,7 +97,7 @@ public class TelegramBotService : BackgroundService, ITelegramBotService
                 dbCb.Subscribers.Add(existingSub);
             }
 
-                if (data == "subscribe_all")
+            if (data == "subscribe_all")
             {
                 existingSub.DeviceId = null;
                 existingSub.IsActive = true;
@@ -128,10 +122,10 @@ public class TelegramBotService : BackgroundService, ITelegramBotService
                 existingSub.IsActive = true;
                 await dbCb.SaveChangesAsync(ct);
                 string confirmText = $"Subscribed: {WebUtility.HtmlEncode(dev.Description ?? dev.Id)}.";
-                if (!string.IsNullOrWhiteSpace(_opts.PublicUrl))
+                if (!string.IsNullOrWhiteSpace(_configuration["PublicUrl"]))
                 {
-                    var url = _opts.PublicUrl!.TrimEnd('/') + "/?deviceId=" + Uri.EscapeDataString(dev.Id);
-                    confirmText += "\n🔗 " + $"<a href=\"{WebUtility.HtmlEncode(url)}\">Outage Statistics</a>";
+                    var url = _configuration["PublicUrl"]!.TrimEnd('/') + "/?deviceId=" + Uri.EscapeDataString(dev.Id);
+                    confirmText += "\n🔗 " + $"<a href=\"{WebUtility.HtmlEncode(url)}\">Device Statistic</a>";
                 }
                 await botClient.AnswerCallbackQuery(cq.Id, $"Subscribed: {dev.Description ?? dev.Id}", cancellationToken: ct);
                 if (cq.Message != null)
@@ -151,7 +145,7 @@ public class TelegramBotService : BackgroundService, ITelegramBotService
         using var scope = _services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
-            if (text.StartsWith("/start"))
+        if (text.StartsWith("/start"))
         {
             var existing = await db.Subscribers.FirstOrDefaultAsync(s => s.ChatId == chatId, ct);
             if (existing == null)
@@ -181,12 +175,12 @@ public class TelegramBotService : BackgroundService, ITelegramBotService
         else if (text.StartsWith("/devices"))
         {
             var devices = await db.Devices.OrderBy(d => d.Id).ToListAsync(ct);
-                if (devices.Count == 0)
-                {
-                    await botClient.SendMessage(chatId, "No devices.", cancellationToken: ct);
-                }
-                else
-                {
+            if (devices.Count == 0)
+            {
+                await botClient.SendMessage(chatId, "No devices.", cancellationToken: ct);
+            }
+            else
+            {
                 // build inline keyboard with one button per device
                 var buttons = devices.Select(d => new[] { InlineKeyboardButton.WithCallbackData($"{d.Description ?? d.Id}", $"subscribe:{d.Id}") }).ToArray();
                 // add a button to subscribe to all devices
@@ -255,10 +249,10 @@ public class TelegramBotService : BackgroundService, ITelegramBotService
             else
             {
                 response = $"Subscribed: {WebUtility.HtmlEncode(deviceId)}.";
-                if (!string.IsNullOrWhiteSpace(_opts.PublicUrl))
+                if (!string.IsNullOrWhiteSpace(_configuration["PublicUrl"]))
                 {
-                    var url = _opts.PublicUrl!.TrimEnd('/') + "/?deviceId=" + Uri.EscapeDataString(deviceId);
-                    response += "\n🔗 " + $"<a href=\"{WebUtility.HtmlEncode(url)}\">Statistics</a>";
+                    var url = _configuration["PublicUrl"]!.TrimEnd('/') + "/?deviceId=" + Uri.EscapeDataString(deviceId);
+                    response += "\n🔗 " + $"<a href=\"{WebUtility.HtmlEncode(url)}\">Device Statistic</a>";
                     await botClient.SendMessage(chatId, response, parseMode: ParseMode.Html, cancellationToken: ct);
                 }
                 else
@@ -293,62 +287,31 @@ public class TelegramBotService : BackgroundService, ITelegramBotService
         }
     }
 
-    public async Task SendPowerNotificationAsync(bool isOn, TimeSpan? previousDuration, string? deviceId = null, CancellationToken ct = default)
+    public async Task SendPowerNotificationAsync(bool isOn, string deviceId, string deviceDescription, TimeSpan? prevEventDuration, CancellationToken ct = default)
     {
         if (_client == null) return;
 
-        var dot = isOn ? "🟢" : "🔴";
-        var durText = previousDuration.HasValue ? FormatDuration(previousDuration.Value) : "—";
         string text;
 
-        // Include device name if provided
-        string deviceText = string.Empty;
-        if (!string.IsNullOrWhiteSpace(deviceId))
-        {
-            using var scopeDevice = _services.CreateScope();
-            var dbDevice = scopeDevice.ServiceProvider.GetRequiredService<AppDbContext>();
-            var dev = await dbDevice.Devices.FindAsync(new object[] { deviceId }, ct);
-            if (dev != null)
-                deviceText = dev.Description ?? dev.Id;
-            else
-                deviceText = deviceId;
-        }
-
         if (isOn)
-            text = $"{dot} {deviceText} ON.\n⏱️ Outage: {durText}.";
+            text = $"🟢 {deviceDescription} is ON.\n⏱️ Downtime: {prevEventDuration.ToDisplayString()}";
         else
-            text = $"{dot} {deviceText} OFF.\n⏱️ Uptime: {durText}.";
+            text = $"🔴 {deviceDescription} is OFF.\n⏱️ Uptime: {prevEventDuration.ToDisplayString()}";
 
         using var scope = _services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-        // send to subscribers who are active and either subscribed to all (DeviceId == null)
-        // or subscribed specifically to this device
         var subs = await db.Subscribers.Where(s => s.IsActive && (s.DeviceId == null || s.DeviceId == deviceId)).ToListAsync(ct);
 
         foreach (var s in subs)
         {
             try
             {
-                if (!string.IsNullOrWhiteSpace(_opts.PublicUrl))
-                {
-                    await _client.SendMessage(s.ChatId, text, parseMode: ParseMode.Html, cancellationToken: ct);
-                }
-                else
-                {
-                    await _client.SendMessage(s.ChatId, text, cancellationToken: ct);
-                }
+                await _client.SendMessage(s.ChatId, text, cancellationToken: ct);
             }
             catch
             {
-                // ignore per-subscriber errors
+                _logger?.LogWarning("Failed to send Telegram message to chat {ChatId}", s.ChatId);
             }
         }
-    }
-
-    private static string FormatDuration(TimeSpan ts)
-    {
-        if (ts.TotalHours >= 1)
-            return string.Format("{0:D2}:{1:D2}:{2:D2}", (int)ts.TotalHours, ts.Minutes, ts.Seconds);
-        return string.Format("{0:D2}:{1:D2}", ts.Minutes, ts.Seconds);
     }
 }

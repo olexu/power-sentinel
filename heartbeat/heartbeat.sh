@@ -4,10 +4,10 @@ set -euo pipefail
 DEVICE_ID="Device"
 DEVICE_DESCRIPTION="Device"
 HEARTBEAT_URL="https://your.server/heartbeat"
-HEARTBEAT_TOKEN="HeartbeatToken"
-INTERVAL_SECONDS="15"
+REQUEST_TOKEN="HeartbeatToken"
+INTERVAL_SECONDS="10"
 
-headers=( -H "Content-Type: application/json" -H "X-Heartbeat-Token: $HEARTBEAT_TOKEN" )
+headers=( -H "Content-Type: application/json" -H "Request-Token: $REQUEST_TOKEN" )
 
 payload=$(printf '{"deviceId":"%s","description":"%s"}' "$DEVICE_ID" "$DEVICE_DESCRIPTION")
 

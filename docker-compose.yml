@@ -14,7 +14,7 @@ services:
       - TZ=Europe/Kyiv
       - ASPNETCORE_ENVIRONMENT=Production
       - TelegramBotToken=
-      - HeartbeatSecret=
-      - MonitorIntervalSeconds=15
-      - MonitorTimeoutSeconds=30
+      - RequestToken=
+      - MonitorIntervalSeconds=20
+      - MonitorHeartbeatAliveSeconds=20
       - PublicUrl=

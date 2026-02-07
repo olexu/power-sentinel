@@ -14,25 +14,6 @@ builder.Services.AddControllers();
 var connectionString = builder.Configuration["DatabaseConnectionString"] ?? "Data Source=power-sentinel.db";
 builder.Services.AddDbContext<AppDbContext>(options => options.UseSqlite(connectionString));
 
-builder.Services.Configure<MonitorOptions>(opts =>
-{
-    opts.IntervalSeconds = builder.Configuration.GetValue<int?>("MonitorIntervalSeconds") ?? opts.IntervalSeconds;
-    opts.HeartbeatTimeoutSeconds = builder.Configuration.GetValue<int?>("MonitorTimeoutSeconds") ?? opts.HeartbeatTimeoutSeconds;
-});
-
-builder.Services.Configure<HeartbeatOptions>(opts =>
-{
-    var heartbeatToken = builder.Configuration["HeartbeatToken"];
-    if (!string.IsNullOrEmpty(heartbeatToken)) opts.HeartbeatToken = heartbeatToken;
-});
-
-builder.Services.Configure<TelegramOptions>(opts =>
-{
-    var botToken = builder.Configuration["TelegramBotToken"];
-    if (!string.IsNullOrWhiteSpace(botToken)) opts.BotToken = botToken;
-    var publicUrl = builder.Configuration["PublicUrl"];
-    if (!string.IsNullOrEmpty(publicUrl)) opts.PublicUrl = publicUrl;
-});
 builder.Services.AddSingleton<TelegramBotService>();
 builder.Services.AddSingleton<ITelegramBotService>(sp => sp.GetRequiredService<TelegramBotService>());
 
@@ -44,7 +25,15 @@ var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    db.Database.EnsureCreated();
+    try
+    {
+        DbUpMigration.ApplyMigrations(builder.Configuration["DatabaseConnectionString"] ?? "Data Source=power-sentinel.db");
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"DbUp migration failed: {ex.Message}");
+        throw;
+    }
 }
 
 app.UseStaticFiles();

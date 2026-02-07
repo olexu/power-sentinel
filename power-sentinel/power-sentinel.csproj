@@ -5,10 +5,10 @@
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
   <ItemGroup>
+    <PackageReference Include="dbup" Version="5.0.41" />
+    <PackageReference Include="dbup-sqlite" Version="6.0.4" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.0.2" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.2">
-      <PrivateAssets>all</PrivateAssets>
-    </PackageReference>
-    <PackageReference Include="Telegram.Bot" Version="22.0.0" />
+    <PackageReference Include="Telegram.Bot" Version="22.8.1" />
+    <EmbeddedResource Include="scripts/**/*.sql" />
   </ItemGroup>
 </Project>

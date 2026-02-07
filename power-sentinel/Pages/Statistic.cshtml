@@ -1,0 +1,167 @@
+@page
+@model PowerSentinel.Pages.StatisticModel
+@{
+  var year = Model.Year;
+  var month = Model.Month;
+  var firstOfMonth = new DateTime(year, month, 1);
+  int startOffset = ((int)firstOfMonth.DayOfWeek + 6) % 7;
+  int totalCells = 42;
+}
+
+@await Html.PartialAsync("_DeviceInfo", @Model.DeviceInfo)
+
+<div class="space-y-2 mt-2">
+  <header class="flex items-start justify-between">
+    <div>
+      <h2 class="text-xl font-semibold text-slate-800">@Model.MonthName</h2>
+    </div>
+    <div class="flex items-center gap-2">
+      <a class="px-3 py-1 bg-white border rounded shadow-sm text-sm"
+         href="?deviceId=@Model.DeviceInfo.Id&year=@(month==1?year-1:year)&month=@(month==1?12:month-1)">Previous</a>
+      <a class="px-3 py-1 bg-white border rounded shadow-sm text-sm"
+         href="?deviceId=@Model.DeviceInfo.Id&year=@(month==12?year+1:year)&month=@(month==12?1:month+1)">Next</a>
+    </div>
+  </header>
+
+  <section class="space-y-2">
+    <!-- Monthly summary metrics -->
+    <div>
+      @{
+        string FmtHM(double seconds)
+        {
+          var ts = TimeSpan.FromSeconds(seconds); return
+        $"{(int)ts.TotalHours:D2}:{ts.Minutes:D2}";
+        }
+      }
+
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+        <div class="p-3 bg-white border rounded">
+          <div class="flex items-center justify-between sm:flex-col sm:items-start sm:gap-1">
+            <div class="text-xs text-slate-500">Total uptime</div>
+            <div class="text-lg font-semibold">@($"{Model.UptimePercent:F0}%")</div>
+          </div>
+        </div>
+        <div class="p-3 bg-white border rounded">
+          <div class="flex items-center justify-between sm:flex-col sm:items-start sm:gap-1">
+            <div class="text-xs text-slate-500">Downtime count</div>
+            <div class="text-lg font-semibold">@Model.OutageCount</div>
+          </div>
+        </div>
+        <div class="p-3 bg-white border rounded">
+          <div class="flex items-center justify-between sm:flex-col sm:items-start sm:gap-1">
+            <div class="text-xs text-slate-500">Average downtime</div>
+            <div class="text-lg font-semibold">@FmtHM(Model.AvgOutageSeconds)</div>
+          </div>
+        </div>
+        <div class="p-3 bg-white border rounded">
+          <div class="flex items-center justify-between sm:flex-col sm:items-start sm:gap-1">
+            <div class="text-xs text-slate-500">Longest downtime</div>
+            <div class="text-lg font-semibold">@FmtHM(Model.MaxOutageSeconds)</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- Mobile list view (visible on screens smaller than `sm`) -->
+  <div class="sm:hidden space-y-2">
+    @{
+      string ShortFmtLocal(double seconds)
+      {
+        var ts = TimeSpan.FromSeconds(seconds); return
+      $"{(int)ts.TotalHours:D2}:{ts.Minutes:D2}";
+      }
+    }
+    @foreach (var stat in Model.Days)
+    {
+      var total = stat.OnSeconds + stat.OffSeconds;
+      var pctOn = total > 0 ? (int)Math.Round((stat.OnSeconds / (double)total) * 100) : 0;
+      var linkDate = stat.Date.ToString("yyyy-MM-dd");
+      var isToday = stat.Date.Date == DateTime.Now.Date;
+      var todayClass = isToday ? "ring-2 ring-sky-300 bg-sky-50" : string.Empty;
+      <a href="/Events?deviceId=@Model.DeviceId&date=@linkDate"
+         class="flex justify-between items-center p-2 bg-white border rounded @(todayClass)">
+        <div>
+          <div class="text-sm font-medium">@stat.Date.Day <span
+            class="text-xs text-slate-400">@stat.Date.ToString("ddd")</span></div>
+            <div class="text-xs text-slate-500">@ShortFmtLocal(stat.OnSeconds) up • @ShortFmtLocal(stat.OffSeconds) down
+            </div>
+          </div>
+          <div class="w-28">
+            <div class="h-2 bg-gray-200 rounded overflow-hidden">
+              <div class="h-2 bg-emerald-500" style="width:@(pctOn)%"></div>
+            </div>
+            <div class="text-xs text-right text-slate-500">@pctOn% up</div>
+          </div>
+        </a>
+      }
+    </div>
+
+    <section>
+      <div class="overflow-x-auto flex justify-center">
+        <div class="hidden sm:inline-grid sm:grid-cols-7 grid-cols-4 gap-2">
+          @for (int i = 0; i < totalCells; i++)
+          {
+            int dayIndex = i - startOffset + 1;
+            if (dayIndex < 1 || dayIndex > Model.Days.Count)
+            {
+              <div class="h-20 bg-transparent hidden sm:block"></div>
+            }
+            else
+            {
+              var stat = Model.Days[dayIndex - 1];
+              var total = stat.OnSeconds + stat.OffSeconds;
+              var pctOn = total > 0 ? (stat.OnSeconds / (double)total) * 100.0 : 0.0;
+              // clamp and convert to integer to avoid locale-specific decimal separators
+              pctOn = Math.Max(0.0, Math.Min(100.0, pctOn));
+              var pctOnInt = (int)Math.Round(pctOn);
+              var pctOffInt = 100 - pctOnInt;
+              string dayLabel = stat.Date.Day.ToString();
+              string weekdayShort = stat.Date.ToString("ddd");
+
+              string ShortFmt(double seconds)
+              {
+                var ts = TimeSpan.FromSeconds(seconds);
+                return $"{(int)ts.TotalHours:D2}:{ts.Minutes:D2}";
+              }
+
+              var linkDate = stat.Date.ToString("yyyy-MM-dd");
+              // gradient background: left = uptime (green), right = outage (red)
+              var greenAlpha = "rgba(16,185,129,0.12)"; // emerald-500 pastel
+              var redAlpha = "rgba(239,68,68,0.12)"; // red-500 pastel
+              var styleBg = total > 0 ? $"background: linear-gradient(to right, {greenAlpha} {pctOnInt}%, {redAlpha}       {pctOnInt}%);" : string.Empty;
+              var textColorClass = total > 0 ? "text-slate-800" : "text-slate-400";
+              var isToday = stat.Date.Date == DateTime.Now.Date;
+              var todayClass = isToday ? "border-2 border-sky-300" : string.Empty;
+              var onCircleClass = total > 0 ? "bg-emerald-500" : "bg-gray-300";
+              var offCircleClass = total > 0 ? "bg-red-500" : "bg-gray-300";
+              var onLabel = total > 0 ? ShortFmt(stat.OnSeconds) : "--:--";
+              var offLabel = total > 0 ? ShortFmt(stat.OffSeconds) : "--:--";
+              <a href="/Events?deviceId=@Model.DeviceId&date=@linkDate"
+                 class="block p-2 border rounded-lg h-20 w-20 hover:shadow-md @(textColorClass) @(todayClass)"
+                 style="@(styleBg)">
+                <div class="flex justify-between items-start">
+                  <div class="text-sm font-medium">@dayLabel</div>
+                  <div class="text-xs text-slate-400">@weekdayShort</div>
+                </div>
+
+                <div class="flex flex-col justify-center h-11">
+                  <div class="mt-1 text-slate-600 flex flex-col gap-1">
+                    <div class="flex items-center gap-2">
+                      <span class="w-2 h-2 rounded-full @(onCircleClass)" aria-hidden="true"></span>
+                      <span class="text-xs">@onLabel</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                      <span class="w-2 h-2 rounded-full @(offCircleClass)" aria-hidden="true"></span>
+                      <span class="text-xs">@offLabel</span>
+                    </div>
+                  </div>
+                </div>
+              </a>
+            }
+          }
+        </div>
+      </div>
+    </section>
+  </div>

@@ -1,8 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Options;
 using PowerSentinel.Data;
 using PowerSentinel.Models;
-using PowerSentinel.Services;
 
 namespace PowerSentinel.Controllers;
 
@@ -11,40 +9,42 @@ namespace PowerSentinel.Controllers;
 public class HeartbeatController : ControllerBase
 {
     private readonly AppDbContext _db;
-    private readonly HeartbeatOptions _hbOpts;
+    private readonly IConfiguration _configuration;
 
-    public HeartbeatController(AppDbContext db, IOptions<HeartbeatOptions> hbOpts)
+    public HeartbeatController(AppDbContext db, IConfiguration configuration)
     {
         _db = db;
-        _hbOpts = hbOpts?.Value ?? new HeartbeatOptions();
+        _configuration = configuration;
     }
 
     [HttpPost]
     public async Task<IActionResult> Post([FromBody] HeartbeatDto dto)
     {
-        // If a secret is configured, require the client to send it in the X-Heartbeat-Token header.
-        if (!string.IsNullOrWhiteSpace(_hbOpts.HeartbeatToken))
+        // If a secret is configured, require the client to send it in the Request-Token header.
+        var requestToken = _configuration["RequestToken"];
+
+        if (!string.IsNullOrWhiteSpace(requestToken))
         {
-            if (!Request.Headers.TryGetValue("X-Heartbeat-Token", out var token) || string.IsNullOrEmpty(token))
+            if (!Request.Headers.TryGetValue("Request-Token", out var token) || string.IsNullOrEmpty(token))
             {
-                return Unauthorized("missing heartbeat token");
+                return Unauthorized("Missing request token");
             }
 
-            if (!string.Equals(token.ToString(), _hbOpts.HeartbeatToken, StringComparison.Ordinal))
+            if (!string.Equals(token.ToString(), requestToken, StringComparison.Ordinal))
             {
-                return Unauthorized("invalid heartbeat token");
+                return Unauthorized("Invalid request token");
             }
         }
 
         var now = DateTime.Now;
 
         if (dto == null || string.IsNullOrWhiteSpace(dto.DeviceId))
-            return BadRequest("deviceId is required");
+            return BadRequest("DeviceId is required");
 
         var device = await _db.Devices.FindAsync(new object[] { dto.DeviceId }, HttpContext.RequestAborted);
         if (device == null)
         {
-            device = new Device { Id = dto.DeviceId, Description = dto.Description, Heartbeat = now };
+            device = new Device { Id = dto.DeviceId, Description = dto.Description ?? dto.DeviceId, Heartbeat = now };
             _db.Devices.Add(device);
         }
         else

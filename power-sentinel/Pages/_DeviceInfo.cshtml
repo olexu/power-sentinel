@@ -1,0 +1,46 @@
+@model PowerSentinel.Pages.DeviceInfo
+@using PowerSentinel.Helpers
+@{
+    var d = Model;
+    var deviceBg = d.IsOn == true ? "bg-emerald-50" : d.IsOn == false ? "bg-red-50" : "bg-white";
+    var dotClass = d.IsOn == true ? "bg-emerald-500" : d.IsOn == false ? "bg-red-500" : "bg-gray-300";
+    var statusText = d.IsOn == true ? "On" : d.IsOn == false ? "Off" : "";
+    var timeLabel = d.TimeSpan.ToDisplayString();
+}
+
+<div class="flex justify-between p-2 items-center  @(deviceBg) border rounded overflow-hidden hover:shadow-md">
+    <h3 id="@($"device-{d.Id}")" class="text-sm text-slate-700 font-medium truncate">
+        @d.Description
+    </h3>
+    <div>
+        @if (d.IsOn.HasValue)
+        {
+            @if (d.IsOn.Value)
+            {
+                <span role="status" aria-label="Power status: On"
+                      class="inline-flex items-center gap-1 bg-emerald-100 text-emerald-800 p-1 px-2 rounded text-xs font-medium">
+                    <span class="w-2 h-2 rounded-full bg-emerald-600" aria-hidden="true"></span>
+                    ON
+                    @if (d.TimeSpan.HasValue)
+                    {
+                        <span>for</span>
+                        <time aria-label="@timeLabel">@timeLabel</time>
+                    }
+                </span>
+            }
+            else
+            {
+                <span role="status" aria-label="Power status: Off"
+                      class="inline-flex items-center gap-1 bg-red-100 text-red-800 p-1 px-2 rounded text-xs font-medium">
+                    <span class="w-2 h-2 rounded-full bg-red-600" aria-hidden="true"></span>
+                    OFF
+                    @if (d.TimeSpan.HasValue)
+                    {
+                        <span>for</span>
+                        <time aria-label="@timeLabel">@timeLabel</time>
+                    }
+                </span>
+            }
+        }
+    </div>
+</div>

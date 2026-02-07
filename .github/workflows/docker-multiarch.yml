@@ -2,8 +2,8 @@ name: Build and push multi-arch Docker images
 
 on:
   push:
-    branches: [main]
-  workflow_dispatch:
+    tags:
+      - '*'
 
 permissions:
   contents: read
