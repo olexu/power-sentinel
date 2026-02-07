@@ -1,0 +1,34 @@
+@page
+@model PowerSentinel.Pages.Admin.Devices.IndexModel
+@using PowerSentinel.Models
+
+<h2>Devices</h2>
+<p><a asp-page="Create" class="inline-block bg-indigo-600 text-white rounded px-3 py-1 text-sm hover:bg-indigo-700">Create new device</a></p>
+
+<div class="overflow-x-auto">
+    <table class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-gray-50">
+            <tr>
+                <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Id</th>
+                <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
+                <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Heartbeat</th>
+                <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+            </tr>
+        </thead>
+        <tbody class="bg-white divide-y divide-gray-200">
+        @foreach (var d in Model.Devices)
+        {
+            <tr class="odd:bg-white even:bg-gray-50 hover:bg-gray-100 transition-colors">
+                <td class="px-3 py-2 whitespace-nowrap text-xs text-gray-900">@d.Id</td>
+                <td class="px-3 py-2 whitespace-nowrap text-xs text-gray-900">@d.Description</td>
+                <td class="px-3 py-2 whitespace-nowrap text-xs text-gray-500">@(d.Heartbeat?.ToString("u") ?? "")</td>
+                <td class="px-3 py-2 whitespace-nowrap text-xs">
+                    <a asp-page="Edit" asp-route-id="@d.Id" class="text-indigo-600 hover:text-indigo-900 text-xs">Edit</a>
+                    <span class="px-1 text-gray-300">|</span>
+                    <a asp-page="Delete" asp-route-id="@d.Id" class="text-red-600 hover:text-red-800 text-xs">Delete</a>
+                </td>
+            </tr>
+        }
+        </tbody>
+    </table>
+</div>

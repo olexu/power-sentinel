@@ -13,14 +13,14 @@
     <div>
       <form method="get" class="flex items-center gap-2">
         <input type="hidden" name="deviceId" value="@Model.DeviceId" />
-        <input type="date" name="date" value="@(Model.FilterDate.ToString("yyyy-MM-dd") ?? string.Empty)" class="border rounded px-2 py-1 text-sm" />
-        <button class="px-3 py-1 bg-white border rounded text-sm">Filter</button>
+        <input type="date" name="date" value="@(Model.FilterDate.ToString("yyyy-MM-dd") ?? string.Empty)" class="border border-gray-200 rounded px-2 py-1 text-sm" />
+        <button class="px-3 py-1 bg-white border border-gray-200 rounded text-sm">Filter</button>
       </form>
     </div>
   </header>
 
   <section>
-    <div class="overflow-x-auto bg-white border rounded">
+    <div class="overflow-x-auto bg-white border border-gray-200 rounded">
       <table class="min-w-full text-sm">
         <thead class="bg-slate-50 text-slate-600">
           <tr>
@@ -39,7 +39,7 @@
           {
               foreach (var evd in Model.DisplayEvents)
                   {
-                  <tr class="border-t">
+                  <tr class="border-t border-gray-200">
                     <td class="px-3 py-2">
                       @if (evd.IsPowerOn)
                       {

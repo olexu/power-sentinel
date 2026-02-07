@@ -1,0 +1,11 @@
+@page
+@model PowerSentinel.Pages.Admin.Subscribers.DeleteModel
+
+<h2>Delete Subscriber</h2>
+<div>
+    <p>Are you sure you want to delete subscriber '@Model.Subscriber?.Id'?</p>
+    <form method="post">
+        <button type="submit">Yes, delete</button>
+        <a asp-page="Index">Cancel</a>
+    </form>
+</div>

@@ -11,4 +11,10 @@
     <PackageReference Include="Telegram.Bot" Version="22.8.1" />
     <EmbeddedResource Include="scripts/**/*.sql" />
   </ItemGroup>
+  <Target Name="NpmInstall" BeforeTargets="Restore" Condition="Exists('$(ProjectDir)package.json')">
+    <Exec Command="npm ci" WorkingDirectory="$(ProjectDir)" />
+  </Target>
+  <Target Name="NpmBuildOnPublish" BeforeTargets="Publish" Condition="Exists('$(ProjectDir)package.json')">
+    <Exec Command="npm run build" WorkingDirectory="$(ProjectDir)" />
+  </Target>
 </Project>

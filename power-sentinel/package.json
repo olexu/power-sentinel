@@ -1,0 +1,13 @@
+{
+  "name": "power-sentinel",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "build": "npx @tailwindcss/cli -i ./wwwroot/css/site.src.css -o ./wwwroot/css/site.css --minify",
+    "watch": "npx @tailwindcss/cli -i ./wwwroot/css/site.src.css -o ./wwwroot/css/site.css --watch"
+  },
+  "devDependencies": {
+    "@tailwindcss/cli": "^4.1.18",
+    "tailwindcss": "^4.1.18"
+  }
+}

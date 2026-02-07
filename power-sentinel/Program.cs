@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
 using PowerSentinel.Data;
 using PowerSentinel.Services;
@@ -10,6 +11,21 @@ builder.WebHost.UseUrls(urls);
 
 builder.Services.AddRazorPages();
 builder.Services.AddControllers();
+
+// Cookie-based authentication for Admin area
+builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+    .AddCookie(options =>
+    {
+        options.LoginPath = "/Admin/Login";
+        options.LogoutPath = "/Admin/Logout";
+        options.Cookie.Name = "PowerSentinelAuth";
+        options.ExpireTimeSpan = TimeSpan.FromHours(8);
+    });
+
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("AdminOnly", policy => policy.RequireRole("Admin").AddAuthenticationSchemes(CookieAuthenticationDefaults.AuthenticationScheme));
+});
 
 var connectionString = builder.Configuration["DatabaseConnectionString"] ?? "Data Source=power-sentinel.db";
 builder.Services.AddDbContext<AppDbContext>(options => options.UseSqlite(connectionString));
@@ -37,6 +53,8 @@ using (var scope = app.Services.CreateScope())
 }
 
 app.UseStaticFiles();
+app.UseAuthentication();
+app.UseAuthorization();
 app.MapControllers();
 app.MapRazorPages();
 

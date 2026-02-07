@@ -1,0 +1,34 @@
+@page
+@model PowerSentinel.Pages.Admin.Subscribers.EditModel
+
+<h2>Edit Subscriber</h2>
+<form method="post" class="max-w-md space-y-4">
+    <div asp-validation-summary="ModelOnly" class="text-red-600"></div>
+
+    <div>
+        <label asp-for="Subscriber.Id" class="block mb-1">Id</label>
+        <input asp-for="Subscriber.Id" readonly class="border rounded p-2 w-full bg-gray-100" />
+    </div>
+
+    <div>
+        <label asp-for="Subscriber.ChatId" class="block mb-1">ChatId</label>
+        <input asp-for="Subscriber.ChatId" class="border rounded p-2 w-full" />
+        <span asp-validation-for="Subscriber.ChatId" class="text-red-600 text-sm"></span>
+    </div>
+
+    <div>
+        <label asp-for="Subscriber.DeviceId" class="block mb-1">DeviceId</label>
+        <input asp-for="Subscriber.DeviceId" class="border rounded p-2 w-full" />
+        <span asp-validation-for="Subscriber.DeviceId" class="text-red-600 text-sm"></span>
+    </div>
+
+    <div class="flex items-center gap-2">
+        <input asp-for="Subscriber.IsActive" type="checkbox" class="h-4 w-4" />
+        <label asp-for="Subscriber.IsActive" class="text-sm">IsActive</label>
+    </div>
+
+    <div class="flex items-center gap-3">
+        <button type="submit" class="bg-indigo-600 text-white rounded px-4 py-2">Save</button>
+        <a asp-page="Index" class="text-gray-600">Cancel</a>
+    </div>
+</form>

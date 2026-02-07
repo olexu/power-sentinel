@@ -1,0 +1,41 @@
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+<!doctype html>
+<html class="h-full bg-gray-100">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin - PowerSentinel</title>
+    <link rel="stylesheet" href="/css/site.css" />
+</head>
+<body class="h-full">
+    <header class="bg-slate-800 text-white">
+        <div class="mx-auto max-w-7xl px-4 py-4 flex items-center justify-between">
+            <div class="flex items-center space-x-6">
+                <a asp-page="/Admin/Index" class="hover:underline">
+                    <h1 class="text-lg font-semibold">Power-Sentinel Admin</h1>
+                </a>
+                @{
+                    var path = Context.Request.Path.Value ?? string.Empty;
+                }
+                <nav class="space-x-4 text-sm">
+                    <a asp-page="/Admin/Devices/Index" class="@(path.StartsWith("/Admin/Devices", StringComparison.OrdinalIgnoreCase) ? "text-white underline font-semibold" : "hover:underline text-slate-200")">Devices</a>
+                    <a asp-page="/Admin/Events/Index" class="@(path.StartsWith("/Admin/Events", StringComparison.OrdinalIgnoreCase) ? "text-white underline font-semibold" : "hover:underline text-slate-200")">Events</a>
+                    <a asp-page="/Admin/Subscribers/Index" class="@(path.StartsWith("/Admin/Subscribers", StringComparison.OrdinalIgnoreCase) ? "text-white underline font-semibold" : "hover:underline text-slate-200")">Subscribers</a>
+                </nav>
+            </div>
+            <div class="text-sm">
+                <a asp-page="/Index" class="mr-4 hover:underline">Public</a>
+                <a asp-page="/Admin/Logout" class="hover:underline">Logout</a>
+            </div>
+        </div>
+    </header>
+    <main class="py-8">
+        <div class="mx-auto max-w-7xl px-4">
+            <div class="bg-white shadow rounded-lg p-6">
+                @RenderBody()
+            </div>
+        </div>
+    </main>
+</body>
+
+</html>

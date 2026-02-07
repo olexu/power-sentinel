@@ -20,3 +20,5 @@ artifacts/
 
 # OS
 .DS_Store
+node_modules
+power-sentinel/wwwroot/css/site.css

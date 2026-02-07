@@ -1,0 +1,29 @@
+@page
+@model PowerSentinel.Pages.Admin.Devices.EditModel
+
+<h2>Edit Device</h2>
+<form method="post" class="max-w-md space-y-4">
+    <div asp-validation-summary="ModelOnly" class="text-red-600"></div>
+
+    <div>
+        <label asp-for="Device.Id" class="block mb-1">Id</label>
+        <input asp-for="Device.Id" readonly class="border rounded p-2 w-full bg-gray-100" />
+    </div>
+
+    <div>
+        <label asp-for="Device.Description" class="block mb-1">Description</label>
+        <input asp-for="Device.Description" class="border rounded p-2 w-full" />
+        <span asp-validation-for="Device.Description" class="text-red-600 text-sm"></span>
+    </div>
+
+    <div>
+        <label asp-for="Device.Heartbeat" class="block mb-1">Heartbeat</label>
+        <input asp-for="Device.Heartbeat" type="datetime-local" class="border rounded p-2 w-full" />
+        <span asp-validation-for="Device.Heartbeat" class="text-red-600 text-sm"></span>
+    </div>
+
+    <div class="flex items-center gap-3">
+        <button type="submit" class="bg-indigo-600 text-white rounded px-4 py-2">Save</button>
+        <a asp-page="Index" class="text-gray-600">Cancel</a>
+    </div>
+</form>

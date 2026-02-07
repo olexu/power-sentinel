@@ -1,0 +1,20 @@
+@page
+@model PowerSentinel.Pages.Admin.IndexModel
+
+<h2>Admin</h2>
+
+@if (!string.IsNullOrEmpty(Model.StatusMessage))
+{
+	<div class="mb-4 text-sm text-gray-700">@Model.StatusMessage</div>
+}
+
+<div class="flex flex-col gap-4 items-start">
+	<form method="post" asp-page-handler="Export">
+		<button type="submit" class="bg-green-600 text-white rounded px-4 py-2">Export all events (JSON)</button>
+	</form>
+
+	<form method="post" enctype="multipart/form-data" asp-page-handler="Import" class="flex items-center gap-2">
+		<input type="file" name="file" accept="application/json" class="border rounded p-1" />
+		<button type="submit" class="bg-red-800 text-white rounded px-4 py-2">Upload events (JSON)</button>
+	</form>
+</div>

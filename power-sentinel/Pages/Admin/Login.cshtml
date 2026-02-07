@@ -1,0 +1,20 @@
+@page
+@model PowerSentinel.Pages.Admin.LoginModel
+<h2>Admin Login</h2>
+<form method="post" class="max-w-md">
+    @Html.AntiForgeryToken()
+    <div class="mb-2">
+        <label asp-for="Username" class="block mb-1">Username</label>
+        <input asp-for="Username" class="border rounded p-2 w-full" />
+    </div>
+    <div class="mb-2">
+        <label asp-for="Password" class="block mb-1">Password</label>
+        <input asp-for="Password" type="password" class="border rounded p-2 w-full" />
+    </div>
+    <button type="submit" class="border rounded px-3 py-2">Login</button>
+</form>
+
+@if (!string.IsNullOrEmpty(Model.ErrorMessage))
+{
+    <div style="color:red" class="mt-2">@Model.ErrorMessage</div>
+}

@@ -16,9 +16,9 @@
       <h2 class="text-xl font-semibold text-slate-800">@Model.MonthName</h2>
     </div>
     <div class="flex items-center gap-2">
-      <a class="px-3 py-1 bg-white border rounded shadow-sm text-sm"
+      <a class="px-3 py-1 bg-white border border-gray-200 rounded shadow-sm text-sm"
          href="?deviceId=@Model.DeviceInfo.Id&year=@(month==1?year-1:year)&month=@(month==1?12:month-1)">Previous</a>
-      <a class="px-3 py-1 bg-white border rounded shadow-sm text-sm"
+      <a class="px-3 py-1 bg-white border border-gray-200 rounded shadow-sm text-sm"
          href="?deviceId=@Model.DeviceInfo.Id&year=@(month==12?year+1:year)&month=@(month==12?1:month+1)">Next</a>
     </div>
   </header>
@@ -35,25 +35,25 @@
       }
 
       <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
-        <div class="p-3 bg-white border rounded">
+        <div class="p-3 bg-white border border-gray-200 rounded">
           <div class="flex items-center justify-between sm:flex-col sm:items-start sm:gap-1">
             <div class="text-xs text-slate-500">Total uptime</div>
             <div class="text-lg font-semibold">@($"{Model.UptimePercent:F0}%")</div>
           </div>
         </div>
-        <div class="p-3 bg-white border rounded">
+        <div class="p-3 bg-white border border-gray-200 rounded">
           <div class="flex items-center justify-between sm:flex-col sm:items-start sm:gap-1">
             <div class="text-xs text-slate-500">Downtime count</div>
             <div class="text-lg font-semibold">@Model.OutageCount</div>
           </div>
         </div>
-        <div class="p-3 bg-white border rounded">
+        <div class="p-3 bg-white border border-gray-200 rounded">
           <div class="flex items-center justify-between sm:flex-col sm:items-start sm:gap-1">
             <div class="text-xs text-slate-500">Average downtime</div>
             <div class="text-lg font-semibold">@FmtHM(Model.AvgOutageSeconds)</div>
           </div>
         </div>
-        <div class="p-3 bg-white border rounded">
+        <div class="p-3 bg-white border border-gray-200 rounded">
           <div class="flex items-center justify-between sm:flex-col sm:items-start sm:gap-1">
             <div class="text-xs text-slate-500">Longest downtime</div>
             <div class="text-lg font-semibold">@FmtHM(Model.MaxOutageSeconds)</div>
@@ -81,7 +81,7 @@
       var isToday = stat.Date.Date == DateTime.Now.Date;
       var todayClass = isToday ? "ring-2 ring-sky-300 bg-sky-50" : string.Empty;
       <a href="/Events?deviceId=@Model.DeviceId&date=@linkDate"
-         class="flex justify-between items-center p-2 bg-white border rounded @(todayClass)">
+         class="flex justify-between items-center p-2 bg-white border border-gray-200 rounded @(todayClass)">
         <div>
           <div class="text-sm font-medium">@stat.Date.Day <span
             class="text-xs text-slate-400">@stat.Date.ToString("ddd")</span></div>
@@ -139,7 +139,7 @@
               var onLabel = total > 0 ? ShortFmt(stat.OnSeconds) : "--:--";
               var offLabel = total > 0 ? ShortFmt(stat.OffSeconds) : "--:--";
               <a href="/Events?deviceId=@Model.DeviceId&date=@linkDate"
-                 class="block p-2 border rounded-lg h-20 w-20 hover:shadow-md @(textColorClass) @(todayClass)"
+                 class="block p-2 border border-gray-200 rounded h-20 w-20 hover:shadow-md @(textColorClass) @(todayClass)"
                  style="@(styleBg)">
                 <div class="flex justify-between items-start">
                   <div class="text-sm font-medium">@dayLabel</div>

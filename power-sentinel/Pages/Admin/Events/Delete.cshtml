@@ -1,0 +1,11 @@
+@page
+@model PowerSentinel.Pages.Admin.Events.DeleteModel
+
+<h2>Delete Event</h2>
+<div>
+    <p>Are you sure you want to delete event '@Model.Event?.Id'?</p>
+    <form method="post">
+        <button type="submit">Yes, delete</button>
+        <a asp-page="Index">Cancel</a>
+    </form>
+</div>
