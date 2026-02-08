@@ -31,6 +31,7 @@ public class EditModel : PageModel
         if (existing == null) return RedirectToPage("Index");
         existing.Description = Device.Description;
         existing.Heartbeat = Device.Heartbeat;
+        existing.HeartbeatKey = Device.HeartbeatKey;
         await _db.SaveChangesAsync();
         return RedirectToPage("Index");
     }

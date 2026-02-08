@@ -26,7 +26,7 @@ public class MonitorService : BackgroundService
             try
             {
                 var now = DateTime.Now;
-                var heartbeatAlive = now.AddSeconds(-_configuration.GetValue("MonitorHeartbeatAliveSeconds", 20));
+                var heartbeatAlive = now.AddSeconds(-_configuration.GetValue("Monitor:HeartbeatAliveSeconds", 15));
 
                 using var scope = _services.CreateScope();
                 var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
@@ -95,7 +95,7 @@ public class MonitorService : BackgroundService
                 _logger?.LogError(ex, "Monitor service loop error");
             }
 
-            await Task.Delay(TimeSpan.FromSeconds(_configuration.GetValue("MonitorIntervalSeconds", 20)), stoppingToken);
+            await Task.Delay(TimeSpan.FromSeconds(_configuration.GetValue("Monitor:IntervalSeconds", 15)), stoppingToken);
         }
     }
 }

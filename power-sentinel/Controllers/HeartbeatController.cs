@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using PowerSentinel.Data;
 using PowerSentinel.Models;
 
@@ -18,49 +19,31 @@ public class HeartbeatController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<IActionResult> Post([FromBody] HeartbeatDto dto)
+    public async Task<IActionResult> Post([FromQuery] string deviceId)
     {
-        // If a secret is configured, require the client to send it in the Request-Token header.
-        var requestToken = _configuration["RequestToken"];
-
-        if (!string.IsNullOrWhiteSpace(requestToken))
-        {
-            if (!Request.Headers.TryGetValue("Request-Token", out var token) || string.IsNullOrEmpty(token))
-            {
-                return Unauthorized("Missing request token");
-            }
-
-            if (!string.Equals(token.ToString(), requestToken, StringComparison.Ordinal))
-            {
-                return Unauthorized("Invalid request token");
-            }
-        }
-
-        var now = DateTime.Now;
-
-        if (dto == null || string.IsNullOrWhiteSpace(dto.DeviceId))
+        if (string.IsNullOrWhiteSpace(deviceId))
             return BadRequest("DeviceId is required");
 
-        var device = await _db.Devices.FindAsync(new object[] { dto.DeviceId }, HttpContext.RequestAborted);
+        var device = await _db.Devices.FirstOrDefaultAsync(d => d.Id == deviceId, HttpContext.RequestAborted);
+        
         if (device == null)
         {
-            device = new Device { Id = dto.DeviceId, Description = dto.Description ?? dto.DeviceId, Heartbeat = now };
-            _db.Devices.Add(device);
+            return NotFound($"Unknown device '{deviceId}'");
         }
-        else
+        if (!string.IsNullOrWhiteSpace(device.HeartbeatKey))
         {
-            device.Heartbeat = now;
-            if (!string.IsNullOrWhiteSpace(dto.Description)) device.Description = dto.Description;
-            _db.Devices.Update(device);
+            if (!Request.Headers.TryGetValue("Heartbeat-Key", out var hbKey) || string.IsNullOrWhiteSpace(hbKey))
+            {
+                return Unauthorized("Missing device heartbeat key");
+            }
+            if (!string.Equals(hbKey.ToString(), device.HeartbeatKey, StringComparison.Ordinal))
+            {
+                return Unauthorized("Invalid device heartbeat key");
+            }
         }
 
+        device.Heartbeat = DateTime.Now;
         await _db.SaveChangesAsync(HttpContext.RequestAborted);
         return Ok();
-    }
-
-    public class HeartbeatDto
-    {
-        public string? DeviceId { get; set; }
-        public string? Description { get; set; }
     }
 }

@@ -15,5 +15,9 @@ public class Device
     [Column("heartbeat")]
     public DateTime? Heartbeat { get; set; }
 
+    [Column("heartbeat_key")]
+    [StringLength(128)]
+    public string? HeartbeatKey { get; set; }
+
     public ICollection<Event> Events { get; set; } = new List<Event>();
 }
