@@ -1,18 +1,14 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-DEVICE_ID="Device"
-DEVICE_DESCRIPTION="Device"
-HEARTBEAT_URL="https://your.server/heartbeat"
-REQUEST_TOKEN="HeartbeatToken"
+HEARTBEAT_URL="https://your.server/heartbeat?deviceId=deviceId"
+HEARTBEAT_KEY="HeartbeatKey"
 INTERVAL_SECONDS="10"
 
-headers=( -H "Content-Type: application/json" -H "Request-Token: $REQUEST_TOKEN" )
-
-payload=$(printf '{"deviceId":"%s","description":"%s"}' "$DEVICE_ID" "$DEVICE_DESCRIPTION")
+headers=( -H "Heartbeat-Key: $HEARTBEAT_KEY" )
 
 while true; do
-  if ! curl -fsS -X POST "${headers[@]}" -d "$payload" "$HEARTBEAT_URL"; then
+  if ! curl -fsS -X POST "${headers[@]}" "$HEARTBEAT_URL"; then
     echo "[$(date -u +%Y-%m-%dT%H:%M:%SZ)] curl POST failed" >&2
   fi
   sleep "$INTERVAL_SECONDS"
