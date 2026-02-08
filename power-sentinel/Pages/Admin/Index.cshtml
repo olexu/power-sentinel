@@ -17,4 +17,9 @@
 		<input type="file" name="file" accept="application/json" class="border rounded p-1" />
 		<button type="submit" class="bg-red-800 text-white rounded px-4 py-2">Upload events (JSON)</button>
 	</form>
+
+	<form method="post" class="flex items-center gap-2" asp-page-handler="Generate">
+		<input type="text" name="deviceId" placeholder="Device Id (optional)" class="border rounded p-1" />
+		<button type="submit" class="bg-blue-600 text-white rounded px-4 py-2">Generate test data</button>
+	</form>
 </div>

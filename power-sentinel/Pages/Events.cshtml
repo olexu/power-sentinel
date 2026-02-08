@@ -19,6 +19,20 @@
     </div>
   </header>
 
+  <section class="mt-2">
+    <div class="mt-2 grid grid-cols-2 gap-2">
+      <div class="bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 rounded p-3">
+        <div class="text-xs text-slate-500 dark:text-slate-400">Total uptime</div>
+        <div class="text-lg font-semibold text-slate-800 dark:text-slate-200">@Model.UptimePercent.ToString("F1")% (@Model.TotalOnDuration.ToDisplayString())</div>
+      </div>
+
+      <div class="bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 rounded p-3">
+        <div class="text-xs text-slate-500 dark:text-slate-400">Total downtime</div>
+        <div class="text-lg font-semibold text-slate-800 dark:text-slate-200">@Model.DowntimePercent.ToString("F1")% (@Model.TotalOffDuration.ToDisplayString())</div>
+      </div>
+    </div>
+  </section>
+
   <section>
     <div class="overflow-x-auto bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 rounded">
       <table class="min-w-full text-sm">

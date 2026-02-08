@@ -80,6 +80,95 @@ public class IndexModel : PageModel
         return RedirectToPage();
     }
 
+    public async Task<IActionResult> OnPostGenerateAsync(string? deviceId)
+    {
+        var rng = new Random();
+
+        var id = string.IsNullOrWhiteSpace(deviceId) ? Guid.NewGuid().ToString() : deviceId!;
+
+        var device = await _db.Devices.FindAsync(id);
+        if (device == null)
+        {
+            device = new Device { Id = id, Description = id };
+            _db.Devices.Add(device);
+            await _db.SaveChangesAsync();
+        }
+
+        var endDate = DateTime.Now;
+        var startDate = endDate.AddMonths(-2);
+
+        var events = new List<Event>();
+
+        DateTime currentStart = startDate;
+        bool createdSameDay = false, createdMultiDay = false;
+        var nextIsOn = rng.Next(0, 2) == 0;
+
+        while (currentStart < endDate)
+        {
+            var isMultiDay = rng.NextDouble() < 0.25;
+            DateTime eventStart = currentStart;
+            DateTime eventEnd;
+            if (!isMultiDay)
+            {
+                var endOfDay = new DateTime(eventStart.Year, eventStart.Month, eventStart.Day, 23, 59, 0, DateTimeKind.Utc);
+                var minutesAvailable = (int)Math.Floor((endOfDay - eventStart).TotalMinutes);
+
+                if (minutesAvailable < 1)
+                {
+                    var days = rng.Next(1, 3);
+                    eventEnd = eventStart.AddDays(days).AddHours(rng.Next(0, 24)).AddMinutes(rng.Next(0, 60));
+                    createdMultiDay = true;
+                }
+                else
+                {
+                    var maxMinutes = Math.Min(minutesAvailable, 12 * 60);
+                    var minMinutes = Math.Min(30, maxMinutes);
+                    var durationMinutes = rng.Next(minMinutes, maxMinutes + 1);
+                    eventEnd = eventStart.AddMinutes(durationMinutes);
+                    createdSameDay = true;
+                }
+            }
+            else
+            {
+                var days = rng.Next(1, 6);
+                eventEnd = eventStart.AddDays(days).AddHours(rng.Next(0, 24)).AddMinutes(rng.Next(0, 60));
+                createdMultiDay = true;
+            }
+
+            if (eventEnd > endDate) eventEnd = endDate;
+
+            events.Add(new Event { DeviceId = id, IsPowerOn = nextIsOn, StartAt = eventStart, EndAt = eventEnd });
+
+            nextIsOn = !nextIsOn;
+            currentStart = eventEnd;
+        }
+
+        if (!createdMultiDay)
+        {
+            var sampleStart = endDate.AddDays(-10);
+            var sampleEnd = sampleStart.AddDays(2);
+            events.Add(new Event { DeviceId = id, IsPowerOn = false, StartAt = sampleStart, EndAt = sampleEnd });
+        }
+        if (!createdSameDay)
+        {
+            var sampleStart = endDate.AddDays(-1).AddHours(9);
+            var sampleEnd = sampleStart.AddHours(3);
+            events.Add(new Event { DeviceId = id, IsPowerOn = true, StartAt = sampleStart, EndAt = sampleEnd });
+        }
+
+        events = events.OrderBy(e => e.StartAt).ToList();
+        for (int i = 1; i < events.Count; i++)
+        {
+            events[i].IsPowerOn = !events[i - 1].IsPowerOn;
+        }
+
+        await _db.Events.AddRangeAsync(events);
+        var added = await _db.SaveChangesAsync();
+
+        StatusMessage = $"Generated {events.Count} events for device {id} (DB changes: {added}).";
+        return RedirectToPage();
+    }
+
     private class ImportedEvent
     {
         public string? DeviceId { get; set; }

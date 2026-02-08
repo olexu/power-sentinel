@@ -5,8 +5,8 @@ PRAGMA foreign_keys = ON;
 CREATE TABLE IF NOT EXISTS devices (
   id TEXT PRIMARY KEY NOT NULL,
   description TEXT,
-  heartbeat DATETIME,
-  heartbeat_key TEXT
+  heartbeat_key TEXT,
+  heartbeat_at DATETIME
 );
 
 CREATE TABLE IF NOT EXISTS events (

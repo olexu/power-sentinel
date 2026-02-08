@@ -5,15 +5,15 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Power-Sentinel</title>
+    <link rel="icon" href="favicon.ico">
     <script>
-            // Apply stored theme early to avoid flash and ensure overrides work before CSS loads
-            (function () {
-                try {
-                    const stored = localStorage.getItem('ps-theme');
-                    if (stored === 'dark') document.documentElement.classList.add('dark');
-                    else if (stored === 'light') { document.documentElement.classList.remove('dark'); document.documentElement.classList.add('light'); }
-                } catch (e) { }
-            })();
+        (function () {
+            try {
+                const stored = localStorage.getItem('ps-theme');
+                if (stored === 'dark') document.documentElement.classList.add('dark');
+                else if (stored === 'light') { document.documentElement.classList.remove('dark'); document.documentElement.classList.add('light'); }
+            } catch (e) { }
+        })();
     </script>
     <link rel="stylesheet" href="/css/site.css" />
 </head>
@@ -43,40 +43,38 @@
         @RenderBody()
     </main>
     @RenderSection("Scripts", required: false)
+    <script>
+        (function () {
+            const storageKey = 'ps-theme';
+            const toggle = document.getElementById('theme-toggle');
+            const apply = (theme) => {
+                if (theme === 'dark') {
+                    document.documentElement.classList.add('dark');
+                    document.documentElement.classList.remove('light');
+                    toggle?.setAttribute('aria-pressed', 'true');
+                } else {
+                    document.documentElement.classList.remove('dark');
+                    document.documentElement.classList.add('light');
+                    toggle?.setAttribute('aria-pressed', 'false');
+                }
+            };
+            const stored = localStorage.getItem(storageKey);
+            if (stored) apply(stored);
+            else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) apply('dark');
+            toggle?.addEventListener('click', () => {
+                const isNowDark = document.documentElement.classList.toggle('dark');
+                if (isNowDark) {
+                    document.documentElement.classList.remove('light');
+                    localStorage.setItem(storageKey, 'dark');
+                    toggle.setAttribute('aria-pressed', 'true');
+                } else {
+                    document.documentElement.classList.add('light');
+                    localStorage.setItem(storageKey, 'light');
+                    toggle.setAttribute('aria-pressed', 'false');
+                }
+            });
+        })();
+    </script>
 </body>
-<script>
-    (function () {
-        const storageKey = 'ps-theme';
-        const toggle = document.getElementById('theme-toggle');
-        const apply = (theme) => {
-            if (theme === 'dark') {
-                document.documentElement.classList.add('dark');
-                document.documentElement.classList.remove('light');
-                toggle?.setAttribute('aria-pressed', 'true');
-            } else {
-                document.documentElement.classList.remove('dark');
-                document.documentElement.classList.add('light');
-                toggle?.setAttribute('aria-pressed', 'false');
-            }
-        };
-
-        const stored = localStorage.getItem(storageKey);
-        if (stored) apply(stored);
-        else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) apply('dark');
-
-        toggle?.addEventListener('click', () => {
-            const isNowDark = document.documentElement.classList.toggle('dark');
-            if (isNowDark) {
-                document.documentElement.classList.remove('light');
-                localStorage.setItem(storageKey, 'dark');
-                toggle.setAttribute('aria-pressed', 'true');
-            } else {
-                document.documentElement.classList.add('light');
-                localStorage.setItem(storageKey, 'light');
-                toggle.setAttribute('aria-pressed', 'false');
-            }
-        });
-    })();
-</script>
 
 </html>

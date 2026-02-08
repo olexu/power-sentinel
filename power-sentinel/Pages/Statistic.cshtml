@@ -36,25 +36,25 @@
 
       <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
         <div class="p-3 bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 rounded">
-          <div class="flex items-center justify-between sm:flex-col sm:items-start sm:gap-1">
+          <div class="flex items-center justify-between sm:flex-col sm:items-start">
             <div class="text-xs text-slate-500 dark:text-slate-400">Total uptime</div>
             <div class="text-lg font-semibold dark:text-slate-100">@($"{Model.UptimePercent:F0}%")</div>
           </div>
         </div>
         <div class="p-3 bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 rounded">
-          <div class="flex items-center justify-between sm:flex-col sm:items-start sm:gap-1">
+          <div class="flex items-center justify-between sm:flex-col sm:items-start">
             <div class="text-xs text-slate-500 dark:text-slate-400">Downtime count</div>
             <div class="text-lg font-semibold dark:text-slate-100">@Model.OutageCount</div>
           </div>
         </div>
         <div class="p-3 bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 rounded">
-          <div class="flex items-center justify-between sm:flex-col sm:items-start sm:gap-1">
+          <div class="flex items-center justify-between sm:flex-col sm:items-start">
             <div class="text-xs text-slate-500 dark:text-slate-400">Average downtime</div>
             <div class="text-lg font-semibold dark:text-slate-100">@FmtHM(Model.AvgOutageSeconds)</div>
           </div>
         </div>
         <div class="p-3 bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 rounded">
-          <div class="flex items-center justify-between sm:flex-col sm:items-start sm:gap-1">
+          <div class="flex items-center justify-between sm:flex-col sm:items-start">
             <div class="text-xs text-slate-500 dark:text-slate-400">Longest downtime</div>
             <div class="text-lg font-semibold dark:text-slate-100">@FmtHM(Model.MaxOutageSeconds)</div>
           </div>

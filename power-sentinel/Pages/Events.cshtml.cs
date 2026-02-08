@@ -14,6 +14,10 @@ public class EventsModel : PageModel
     public DateTime FilterDate { get; private set; }
     public DeviceInfo DeviceInfo { get; private set; } = new DeviceInfo(string.Empty, string.Empty, null, null);
     public List<EventDisplay> DisplayEvents { get; private set; } = new();
+    public TimeSpan TotalOnDuration { get; private set; }
+    public TimeSpan TotalOffDuration { get; private set; }
+    public double UptimePercent { get; private set; }
+    public double DowntimePercent { get; private set; }
 
     public async Task OnGetAsync(string? deviceId, string? date)
     {
@@ -54,7 +58,6 @@ public class EventsModel : PageModel
         var filterDateTimeEnd = filterDateTimeStart.AddDays(1);
 
         query = query.Where(e => (e.StartAt >= filterDateTimeStart && e.StartAt < filterDateTimeEnd) || (e.EndAt != null && e.EndAt >= filterDateTimeStart && e.EndAt < filterDateTimeEnd));
-
         var events = await query.OrderBy(e => e.StartAt).ToListAsync();
 
         foreach (var ev in events)
@@ -67,6 +70,25 @@ public class EventsModel : PageModel
                 ev.EndAt,
                 toTime - fromDateTime));
         }
+
+        TotalOnDuration = TimeSpan.Zero;
+        TotalOffDuration = TimeSpan.Zero;
+
+        foreach (var d in DisplayEvents)
+        {
+            if (d.IsPowerOn)
+            {
+                TotalOnDuration += d.DisplayDuration;
+            }
+            else
+            {
+                TotalOffDuration += d.DisplayDuration;
+            }
+        }
+
+        var totalObserved = TotalOnDuration + TotalOffDuration;
+        UptimePercent = totalObserved.TotalSeconds > 0 ? (TotalOnDuration.TotalSeconds / totalObserved.TotalSeconds) * 100.0 : 0.0;
+        DowntimePercent = totalObserved.TotalSeconds > 0 ? (TotalOffDuration.TotalSeconds / totalObserved.TotalSeconds) * 100.0 : 0.0;
     }
 }
 

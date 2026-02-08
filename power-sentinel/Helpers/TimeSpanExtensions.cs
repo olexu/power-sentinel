@@ -17,4 +17,9 @@ public static class TimeSpanExtensions
 
         return $"{ts.Value.Minutes:D}min";
     }
+
+    public static string ToDisplayString(this TimeSpan ts)
+    {
+        return ToDisplayString((TimeSpan?)ts);
+    }
 }
