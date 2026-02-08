@@ -13,12 +13,12 @@
 <div class="space-y-2 mt-2">
   <header class="flex items-start justify-between">
     <div>
-      <h2 class="text-xl font-semibold text-slate-800">@Model.MonthName</h2>
+      <h2 class="text-xl font-semibold text-slate-800 dark:text-slate-200">@Model.MonthName</h2>
     </div>
     <div class="flex items-center gap-2">
-      <a class="px-3 py-1 bg-white border border-gray-200 rounded shadow-sm text-sm"
+      <a class="px-3 py-1 bg-white dark:bg-slate-800 dark:border-gray-700 border border-gray-200 rounded shadow-sm text-sm dark:text-slate-200"
          href="?deviceId=@Model.DeviceInfo.Id&year=@(month==1?year-1:year)&month=@(month==1?12:month-1)">Previous</a>
-      <a class="px-3 py-1 bg-white border border-gray-200 rounded shadow-sm text-sm"
+      <a class="px-3 py-1 bg-white dark:bg-slate-800 dark:border-gray-700 border border-gray-200 rounded shadow-sm text-sm dark:text-slate-200"
          href="?deviceId=@Model.DeviceInfo.Id&year=@(month==12?year+1:year)&month=@(month==12?1:month+1)">Next</a>
     </div>
   </header>
@@ -35,28 +35,28 @@
       }
 
       <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
-        <div class="p-3 bg-white border border-gray-200 rounded">
+        <div class="p-3 bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 rounded">
           <div class="flex items-center justify-between sm:flex-col sm:items-start sm:gap-1">
-            <div class="text-xs text-slate-500">Total uptime</div>
-            <div class="text-lg font-semibold">@($"{Model.UptimePercent:F0}%")</div>
+            <div class="text-xs text-slate-500 dark:text-slate-400">Total uptime</div>
+            <div class="text-lg font-semibold dark:text-slate-100">@($"{Model.UptimePercent:F0}%")</div>
           </div>
         </div>
-        <div class="p-3 bg-white border border-gray-200 rounded">
+        <div class="p-3 bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 rounded">
           <div class="flex items-center justify-between sm:flex-col sm:items-start sm:gap-1">
-            <div class="text-xs text-slate-500">Downtime count</div>
-            <div class="text-lg font-semibold">@Model.OutageCount</div>
+            <div class="text-xs text-slate-500 dark:text-slate-400">Downtime count</div>
+            <div class="text-lg font-semibold dark:text-slate-100">@Model.OutageCount</div>
           </div>
         </div>
-        <div class="p-3 bg-white border border-gray-200 rounded">
+        <div class="p-3 bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 rounded">
           <div class="flex items-center justify-between sm:flex-col sm:items-start sm:gap-1">
-            <div class="text-xs text-slate-500">Average downtime</div>
-            <div class="text-lg font-semibold">@FmtHM(Model.AvgOutageSeconds)</div>
+            <div class="text-xs text-slate-500 dark:text-slate-400">Average downtime</div>
+            <div class="text-lg font-semibold dark:text-slate-100">@FmtHM(Model.AvgOutageSeconds)</div>
           </div>
         </div>
-        <div class="p-3 bg-white border border-gray-200 rounded">
+        <div class="p-3 bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 rounded">
           <div class="flex items-center justify-between sm:flex-col sm:items-start sm:gap-1">
-            <div class="text-xs text-slate-500">Longest downtime</div>
-            <div class="text-lg font-semibold">@FmtHM(Model.MaxOutageSeconds)</div>
+            <div class="text-xs text-slate-500 dark:text-slate-400">Longest downtime</div>
+            <div class="text-lg font-semibold dark:text-slate-100">@FmtHM(Model.MaxOutageSeconds)</div>
           </div>
         </div>
       </div>
@@ -79,9 +79,9 @@
       var pctOn = total > 0 ? (int)Math.Round((stat.OnSeconds / (double)total) * 100) : 0;
       var linkDate = stat.Date.ToString("yyyy-MM-dd");
       var isToday = stat.Date.Date == DateTime.Now.Date;
-      var todayClass = isToday ? "ring-2 ring-sky-300 bg-sky-50" : string.Empty;
+      var todayClass = isToday ? "ring-2 ring-sky-300 dark:ring-sky-500 bg-sky-50 dark:bg-sky-900" : string.Empty;
       <a href="/Events?deviceId=@Model.DeviceId&date=@linkDate"
-         class="flex justify-between items-center p-2 bg-white border border-gray-200 rounded @(todayClass)">
+        class="flex justify-between items-center p-2 bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 rounded @(todayClass) dark:text-slate-200">
         <div>
           <div class="text-sm font-medium">@stat.Date.Day <span
             class="text-xs text-slate-400">@stat.Date.ToString("ddd")</span></div>
@@ -89,8 +89,8 @@
             </div>
           </div>
           <div class="w-28">
-            <div class="h-2 bg-gray-200 rounded overflow-hidden">
-              <div class="h-2 bg-emerald-500" style="width:@(pctOn)%"></div>
+            <div class="h-2 bg-gray-200 dark:bg-gray-700 rounded overflow-hidden">
+              <div class="h-2 bg-emerald-500 dark:bg-emerald-400" style="width:@(pctOn)%"></div>
             </div>
             <div class="text-xs text-right text-slate-500">@pctOn% up</div>
           </div>
@@ -104,8 +104,8 @@
           @for (int i = 0; i < totalCells; i++)
           {
             int dayIndex = i - startOffset + 1;
-            if (dayIndex < 1 || dayIndex > Model.Days.Count)
-            {
+              if (dayIndex < 1 || dayIndex > Model.Days.Count)
+              {
               <div class="h-20 bg-transparent hidden sm:block"></div>
             }
             else
@@ -131,23 +131,23 @@
               var greenAlpha = "rgba(16,185,129,0.12)"; // emerald-500 pastel
               var redAlpha = "rgba(239,68,68,0.12)"; // red-500 pastel
               var styleBg = total > 0 ? $"background: linear-gradient(to right, {greenAlpha} {pctOnInt}%, {redAlpha}       {pctOnInt}%);" : string.Empty;
-              var textColorClass = total > 0 ? "text-slate-800" : "text-slate-400";
+              var textColorClass = total > 0 ? "text-slate-800 dark:text-slate-200" : "text-slate-400 dark:text-slate-400";
               var isToday = stat.Date.Date == DateTime.Now.Date;
-              var todayClass = isToday ? "border-2 border-sky-300" : string.Empty;
-              var onCircleClass = total > 0 ? "bg-emerald-500" : "bg-gray-300";
-              var offCircleClass = total > 0 ? "bg-red-500" : "bg-gray-300";
+              var todayClass = isToday ? "border-2 border-sky-300 dark:border-sky-500" : string.Empty;
+              var onCircleClass = total > 0 ? "bg-emerald-500 dark:bg-emerald-400" : "bg-gray-300 dark:bg-gray-600";
+              var offCircleClass = total > 0 ? "bg-red-500 dark:bg-red-400" : "bg-gray-300 dark:bg-gray-600";
               var onLabel = total > 0 ? ShortFmt(stat.OnSeconds) : "--:--";
               var offLabel = total > 0 ? ShortFmt(stat.OffSeconds) : "--:--";
               <a href="/Events?deviceId=@Model.DeviceId&date=@linkDate"
-                 class="block p-2 border border-gray-200 rounded h-20 w-20 hover:shadow-md @(textColorClass) @(todayClass)"
+                 class="block p-2 border border-gray-200 dark:border-gray-700 rounded h-20 w-20 hover:shadow-md bg-white dark:bg-slate-800 @(textColorClass) @(todayClass)"
                  style="@(styleBg)">
                 <div class="flex justify-between items-start">
-                  <div class="text-sm font-medium">@dayLabel</div>
-                  <div class="text-xs text-slate-400">@weekdayShort</div>
+                  <div class="text-sm font-medium dark:text-slate-100">@dayLabel</div>
+                  <div class="text-xs text-slate-400 dark:text-slate-400">@weekdayShort</div>
                 </div>
 
                 <div class="flex flex-col justify-center h-11">
-                  <div class="mt-1 text-slate-600 flex flex-col gap-1">
+                  <div class="mt-1 text-slate-600 dark:text-slate-300 flex flex-col gap-1">
                     <div class="flex items-center gap-2">
                       <span class="w-2 h-2 rounded-full @(onCircleClass)" aria-hidden="true"></span>
                       <span class="text-xs">@onLabel</span>

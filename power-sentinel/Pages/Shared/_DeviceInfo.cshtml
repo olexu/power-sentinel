@@ -2,14 +2,14 @@
 @using PowerSentinel.Helpers
 @{
     var d = Model;
-    var deviceBg = d.IsOn == true ? "bg-emerald-50" : d.IsOn == false ? "bg-red-50" : "bg-white";
-    var dotClass = d.IsOn == true ? "bg-emerald-500" : d.IsOn == false ? "bg-red-500" : "bg-gray-300";
+    var deviceBg = d.IsOn == true ? "bg-emerald-50 dark:bg-emerald-900" : d.IsOn == false ? "bg-red-50 dark:bg-red-900" : "bg-white dark:bg-slate-800";
+    var dotClass = d.IsOn == true ? "bg-emerald-600 dark:bg-emerald-400" : d.IsOn == false ? "bg-red-600 dark:bg-red-400" : "bg-gray-300 dark:bg-gray-600";
     var statusText = d.IsOn == true ? "On" : d.IsOn == false ? "Off" : "";
     var timeLabel = d.TimeSpan.ToDisplayString();
 }
 
-<div class="flex justify-between p-2 items-center  @(deviceBg) border border-gray-200 rounded overflow-hidden hover:shadow-md">
-    <h3 id="@($"device-{d.Id}")" class="text-sm text-slate-700 font-medium truncate">
+<div class="flex justify-between p-2 items-center @(deviceBg) border border-gray-200 dark:border-gray-700 rounded overflow-hidden hover:shadow-md">
+    <h3 id="@($"device-{d.Id}")" class="text-sm text-slate-700 dark:text-slate-200 font-medium truncate">
         @d.Description
     </h3>
     <div>
@@ -18,8 +18,8 @@
             @if (d.IsOn.Value)
             {
                 <span role="status" aria-label="Power status: On"
-                      class="inline-flex items-center gap-1 bg-emerald-100 text-emerald-800 p-1 px-2 rounded text-xs font-medium">
-                    <span class="w-2 h-2 rounded-full bg-emerald-600" aria-hidden="true"></span>
+                      class="inline-flex items-center gap-1 bg-emerald-100 dark:bg-emerald-900 text-emerald-800 dark:text-emerald-200 p-1 px-2 rounded text-xs font-medium">
+                    <span class="w-2 h-2 rounded-full @(dotClass)" aria-hidden="true"></span>
                     ON
                     @if (d.TimeSpan.HasValue)
                     {
@@ -31,8 +31,8 @@
             else
             {
                 <span role="status" aria-label="Power status: Off"
-                      class="inline-flex items-center gap-1 bg-red-100 text-red-800 p-1 px-2 rounded text-xs font-medium">
-                    <span class="w-2 h-2 rounded-full bg-red-600" aria-hidden="true"></span>
+                      class="inline-flex items-center gap-1 bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200 p-1 px-2 rounded text-xs font-medium">
+                    <span class="w-2 h-2 rounded-full @(dotClass)" aria-hidden="true"></span>
                     OFF
                     @if (d.TimeSpan.HasValue)
                     {

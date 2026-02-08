@@ -8,21 +8,21 @@
 <div class="space-y-2 mt-2">
   <header class="flex items-center justify-between">
     <div>
-      <h2 class="text-xl font-semibold text-slate-800">Events</h2>
+      <h2 class="text-xl font-semibold text-slate-800 dark:text-slate-200">Events</h2>
     </div>
     <div>
       <form method="get" class="flex items-center gap-2">
         <input type="hidden" name="deviceId" value="@Model.DeviceId" />
-        <input type="date" name="date" value="@(Model.FilterDate.ToString("yyyy-MM-dd") ?? string.Empty)" class="border border-gray-200 rounded px-2 py-1 text-sm" />
-        <button class="px-3 py-1 bg-white border border-gray-200 rounded text-sm">Filter</button>
+        <input type="date" name="date" value="@(Model.FilterDate.ToString("yyyy-MM-dd") ?? string.Empty)" class="border border-gray-200 dark:border-gray-700 rounded px-2 py-1 text-sm bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-200" />
+        <button class="px-3 py-1 bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 rounded text-sm dark:text-slate-200">Filter</button>
       </form>
     </div>
   </header>
 
   <section>
-    <div class="overflow-x-auto bg-white border border-gray-200 rounded">
+    <div class="overflow-x-auto bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 rounded">
       <table class="min-w-full text-sm">
-        <thead class="bg-slate-50 text-slate-600">
+        <thead class="bg-slate-50 dark:bg-slate-900 text-slate-600 dark:text-slate-300">
           <tr>
             <th class="px-3 py-2 text-left">Event</th>
             <th class="px-3 py-2 text-left">Start</th>
@@ -33,32 +33,32 @@
         <tbody>
             @if (Model.DisplayEvents.Count == 0)
             {
-              <tr><td class="p-4" colspan="4">No events</td></tr>
+              <tr><td class="p-4 dark:text-slate-200" colspan="4">No events</td></tr>
             }
           else
           {
               foreach (var evd in Model.DisplayEvents)
                   {
-                  <tr class="border-t border-gray-200">
-                    <td class="px-3 py-2">
+                  <tr class="border-t border-gray-200 dark:border-gray-700">
+                    <td class="px-3 py-2 dark:text-slate-200">
                       @if (evd.IsPowerOn)
                       {
-                        <span class="inline-flex items-center gap-1 bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded text-xs font-medium">
-                          <span class="w-2 h-2 rounded-full bg-emerald-600" aria-hidden="true"></span>
+                        <span class="inline-flex items-center gap-1 bg-emerald-100 dark:bg-emerald-900 text-emerald-800 dark:text-emerald-200 px-2 py-0.5 rounded text-xs font-medium">
+                          <span class="w-2 h-2 rounded-full bg-emerald-600 dark:bg-emerald-400" aria-hidden="true"></span>
                           ON
                         </span>
                       }
                       else
                       {
-                        <span class="inline-flex items-center gap-1 bg-red-100 text-red-800 px-2 py-0.5 rounded text-xs font-medium">
-                          <span class="w-2 h-2 rounded-full bg-red-600" aria-hidden="true"></span>
+                        <span class="inline-flex items-center gap-1 bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200 px-2 py-0.5 rounded text-xs font-medium">
+                          <span class="w-2 h-2 rounded-full bg-red-600 dark:bg-red-400" aria-hidden="true"></span>
                           OFF
                         </span>
                       }
                     </td>
-                    <td class="px-3 py-2">@evd.DisplayStart.ToString("dd.MM.yyyy HH:mm")</td>
-                    <td class="px-3 py-2">@(evd.DisplayEnd.HasValue ? evd.DisplayEnd.Value.ToString("dd.MM.yyyy HH:mm") : "—")</td>
-                    <td class="px-3 py-2">
+                    <td class="px-3 py-2 dark:text-slate-200">@evd.DisplayStart.ToString("dd.MM.yyyy HH:mm")</td>
+                    <td class="px-3 py-2 dark:text-slate-200">@(evd.DisplayEnd.HasValue ? evd.DisplayEnd.Value.ToString("dd.MM.yyyy HH:mm") : "—")</td>
+                    <td class="px-3 py-2 dark:text-slate-200">
                       @(((int)evd.DisplayDuration.TotalHours).ToString("D2") + ":" + evd.DisplayDuration.Minutes.ToString("D2"))                          
                     </td>
                   </tr>

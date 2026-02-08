@@ -7,18 +7,18 @@
 
     <div>
         <label asp-for="Device.Id" class="block mb-1">Id</label>
-        <input asp-for="Device.Id" class="border rounded p-2 w-full" />
+        <input asp-for="Device.Id" class="border rounded p-2 w-full bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100" />
         <span asp-validation-for="Device.Id" class="text-red-600 text-sm"></span>
     </div>
 
     <div>
         <label asp-for="Device.Description" class="block mb-1">Description</label>
-        <input asp-for="Device.Description" class="border rounded p-2 w-full" />
+        <input asp-for="Device.Description" class="border rounded p-2 w-full bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100" />
         <span asp-validation-for="Device.Description" class="text-red-600 text-sm"></span>
     </div>
 
     <div class="flex items-center gap-3">
-        <button type="submit" class="bg-indigo-600 text-white rounded px-4 py-2">Create</button>
-        <a asp-page="Index" class="text-gray-600">Cancel</a>
+        <button type="submit" class="bg-indigo-600 dark:bg-indigo-500 text-white rounded px-4 py-2">Create</button>
+        <a asp-page="Index" class="text-gray-600 dark:text-gray-300">Cancel</a>
     </div>
 </form>
