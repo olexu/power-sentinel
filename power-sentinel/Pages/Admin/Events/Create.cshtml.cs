@@ -15,7 +15,11 @@ public class CreateModel : PageModel
     [BindProperty]
     public Event Event { get; set; } = new();
 
-    public void OnGet() { Event.StartAt = DateTime.Now; }
+    public void OnGet()
+    {
+        var now = DateTime.Now;
+        Event.Date = new DateTime(now.Ticks - (now.Ticks % TimeSpan.TicksPerMinute), now.Kind);
+    }
 
     public async Task<IActionResult> OnPostAsync()
     {

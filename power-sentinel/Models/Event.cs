@@ -16,11 +16,8 @@ public class Event
     [Column("is_power_on")]
     public bool IsPowerOn { get; set; }
     
-    [Column("start_at")]
-    public DateTime StartAt { get; set; }
+    [Column("date")]
+    public DateTime Date { get; set; }
     
-    [Column("end_at")]
-    public DateTime? EndAt { get; set; }
-
     public Device Device { get; set; } = null!;
 }

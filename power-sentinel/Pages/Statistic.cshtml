@@ -64,38 +64,56 @@
 
   </section>
 
-  <!-- Mobile list view (visible on screens smaller than `sm`) -->
-  <div class="sm:hidden space-y-2">
-    @{
-      string ShortFmtLocal(double seconds)
-      {
-        var ts = TimeSpan.FromSeconds(seconds); return
-      $"{(int)ts.TotalHours:D2}:{ts.Minutes:D2}";
-      }
-    }
-    @foreach (var stat in Model.Days)
-    {
-      var total = stat.OnSeconds + stat.OffSeconds;
-      var pctOn = total > 0 ? (int)Math.Round((stat.OnSeconds / (double)total) * 100) : 0;
-      var linkDate = stat.Date.ToString("yyyy-MM-dd");
-      var isToday = stat.Date.Date == DateTime.Now.Date;
-      var todayClass = isToday ? "ring-2 ring-sky-300 dark:ring-sky-500 bg-sky-50 dark:bg-sky-900" : string.Empty;
-      <a href="/Events?deviceId=@Model.DeviceId&date=@linkDate"
-        class="flex justify-between items-center p-2 bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 rounded @(todayClass) dark:text-slate-200">
-        <div>
-          <div class="text-sm font-medium">@stat.Date.Day <span
-            class="text-xs text-slate-400">@stat.Date.ToString("ddd")</span></div>
-            <div class="text-xs text-slate-500">@ShortFmtLocal(stat.OnSeconds) up • @ShortFmtLocal(stat.OffSeconds) down
-            </div>
-          </div>
-          <div class="w-28">
-            <div class="h-2 bg-gray-200 dark:bg-gray-700 rounded overflow-hidden">
-              <div class="h-2 bg-emerald-500 dark:bg-emerald-400" style="width:@(pctOn)%"></div>
-            </div>
-            <div class="text-xs text-right text-slate-500">@pctOn% up</div>
-          </div>
-        </a>
-      }
+  <div class="sm:hidden">
+    <div class="flex flex-col gap-2 pb-2">
+      <div id="mobile-days" class="flex flex-col gap-2  max-h-[calc(100vh-330px)] overflow-y-auto scrollbar">
+        @{
+          string ShortFmtLocal(double seconds)
+          {
+            var ts = TimeSpan.FromSeconds(seconds);
+            return $"{(int)ts.TotalHours:D2}:{ts.Minutes:D2}";
+          }
+        }
+        @foreach (var stat in Model.Days)
+        {
+          var total = stat.OnSeconds + stat.OffSeconds;
+          var pctOn = total > 0 ? (int)Math.Round((stat.OnSeconds / (double)total) * 100) : 0;
+          var linkDate = stat.Date.ToString("yyyy-MM-dd");
+          var isToday = stat.Date.Date == DateTime.Now.Date;
+          var todayClass = isToday ? "border-2 border-sky-300 dark:border-sky-500 bg-sky-50 dark:bg-sky-900" :
+          string.Empty;
+          <a id="day-@linkDate" href="/Events?deviceId=@Model.DeviceId&date=@linkDate"
+             class="w-full flex justify-between items-center p-2 bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 rounded @(todayClass) dark:text-slate-200">
+            <div>
+              <div class="text-sm font-medium dark:text-slate-100">@stat.Date.Day <span
+                class="text-xs text-slate-400 dark:text-slate-400">@stat.Date.ToString("ddd")</span></div>
+                <div class="text-xs text-slate-500">@ShortFmtLocal(stat.OnSeconds) up • @ShortFmtLocal(stat.OffSeconds) down
+                </div>
+              </div>
+              <div class="w-28">
+                <div class="h-2 bg-gray-200 dark:bg-gray-700 rounded overflow-hidden">
+                  <div class="h-2 bg-emerald-500 dark:bg-emerald-400" style="width:@(pctOn)%"></div>
+                </div>
+                <div class="text-xs text-right text-slate-500">@pctOn% up</div>
+              </div>
+            </a>
+          }
+        </div>
+
+        <script>
+            (function () {
+              var isCurrentMonth = @((Model.Year == DateTime.Now.Year && Model.Month == DateTime.Now.Month).ToString().ToLower());
+              if (isCurrentMonth) {
+                var todayId = 'day-' + '@DateTime.Now.ToString("yyyy-MM-dd")';
+                var el = document.getElementById(todayId);
+                if (el && el.scrollIntoView) { el.scrollIntoView({ behavior: 'auto', block: 'center', inline: 'nearest' }); }
+              }
+            })();
+        </script>
+      </div>
+
+
+
     </div>
 
     <section>
@@ -104,8 +122,8 @@
           @for (int i = 0; i < totalCells; i++)
           {
             int dayIndex = i - startOffset + 1;
-              if (dayIndex < 1 || dayIndex > Model.Days.Count)
-              {
+            if (dayIndex < 1 || dayIndex > Model.Days.Count)
+            {
               <div class="h-20 bg-transparent hidden sm:block"></div>
             }
             else
@@ -130,7 +148,7 @@
               // gradient background: left = uptime (green), right = outage (red)
               var greenAlpha = "rgba(16,185,129,0.12)"; // emerald-500 pastel
               var redAlpha = "rgba(239,68,68,0.12)"; // red-500 pastel
-              var styleBg = total > 0 ? $"background: linear-gradient(to right, {greenAlpha} {pctOnInt}%, {redAlpha}       {pctOnInt}%);" : string.Empty;
+              var styleBg = total > 0 ? $"background: linear-gradient(to right, {greenAlpha} {pctOnInt}%, {redAlpha}        {pctOnInt}%);" : string.Empty;
               var textColorClass = total > 0 ? "text-slate-800 dark:text-slate-200" : "text-slate-400 dark:text-slate-400";
               var isToday = stat.Date.Date == DateTime.Now.Date;
               var todayClass = isToday ? "border-2 border-sky-300 dark:border-sky-500" : string.Empty;
@@ -164,4 +182,3 @@
         </div>
       </div>
     </section>
-  </div>

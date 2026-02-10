@@ -26,7 +26,7 @@ public class MonitorService : BackgroundService
             try
             {
                 var now = DateTime.Now;
-                var heartbeatAlive = now.AddSeconds(-_configuration.GetValue("Monitor:HeartbeatAliveSeconds", 15));
+                var heartbeatCheckTime = now.AddSeconds(-_configuration.GetValue("Monitor:HeartbeatAliveSeconds", 15));
 
                 using var scope = _services.CreateScope();
                 var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
@@ -34,58 +34,33 @@ public class MonitorService : BackgroundService
                 var devices = await db.Devices.ToListAsync(stoppingToken);
                 foreach (var device in devices)
                 {
-                    var isAlive = device.Heartbeat.HasValue && device.Heartbeat >= heartbeatAlive;
+                    var isPowerOn = device.Heartbeat.HasValue && device.Heartbeat >= heartbeatCheckTime;
 
-                    var lastEvent = await db.Events
+                    var latestDeviceEvent = await db.Events
                         .Where(e => e.DeviceId == device.Id)
-                        .OrderByDescending(e => e.StartAt)
+                        .OrderByDescending(e => e.Date)
                         .FirstOrDefaultAsync(stoppingToken);
 
-                    if (lastEvent == null)
-                    {
-                        var initialEvent = new Event { IsPowerOn = isAlive, StartAt = now, DeviceId = device.Id };
-                        db.Events.Add(initialEvent);
-                        await db.SaveChangesAsync(stoppingToken);
-                        continue;
-                    }
-
-                    if (lastEvent.IsPowerOn == isAlive)
+                    if (latestDeviceEvent != null && latestDeviceEvent.IsPowerOn == isPowerOn)
                     {
                         continue;
                     }
 
-                    if (isAlive)
+                    var newEvent = new Event { DeviceId = device.Id, IsPowerOn = isPowerOn, Date = now };
+                    db.Events.Add(newEvent);
+                    await db.SaveChangesAsync(stoppingToken);
+
+                    if (latestDeviceEvent != null)
                     {
-                        lastEvent.EndAt = now;
-                        var powerOnEvent = new Event { IsPowerOn = true, StartAt = now, DeviceId = device.Id };
-                        db.Events.Add(powerOnEvent);
-                        await db.SaveChangesAsync(stoppingToken);
                         try
                         {
-                            var duration = now - lastEvent.StartAt;
-                            var sendTask = _telegram?.SendPowerNotificationAsync(true, device.Id, device.Description ?? device.Id, duration, stoppingToken);
+                            var duration = now - latestDeviceEvent.Date;
+                            var sendTask = _telegram?.SendPowerNotificationAsync(device.Id, device.Description ?? device.Id, isPowerOn, duration, stoppingToken);
                             if (sendTask != null) await sendTask;
                         }
                         catch (Exception ex)
                         {
                             _logger?.LogWarning(ex, "Failed to send resume notification for device {DeviceId}", device.Id);
-                        }
-                    }
-                    else
-                    {
-                        lastEvent.EndAt = now;
-                        var powerOffEvent = new Event { IsPowerOn = false, StartAt = now, DeviceId = device.Id };
-                        db.Events.Add(powerOffEvent);
-                        await db.SaveChangesAsync(stoppingToken);
-                        try
-                        {
-                            var duration = now - lastEvent.StartAt;
-                            var sendTask = _telegram?.SendPowerNotificationAsync(false, device.Id, device.Description ?? device.Id, duration, stoppingToken);
-                            if (sendTask != null) await sendTask;
-                        }
-                        catch (Exception ex)
-                        {
-                            _logger?.LogWarning(ex, "Failed to send outage notification for device {DeviceId}", device.Id);
                         }
                     }
                 }

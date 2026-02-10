@@ -8,27 +8,37 @@
 <div class="space-y-2 mt-2">
   <header class="flex items-center justify-between">
     <div>
-      <h2 class="text-xl font-semibold text-slate-800 dark:text-slate-200">Events</h2>
+      <h2 class="text-xl font-semibold text-slate-800 dark:text-slate-200">@Model.FilterDate.ToString("dd.MM.yyyy")</h2>
     </div>
-    <div>
-      <form method="get" class="flex items-center gap-2">
-        <input type="hidden" name="deviceId" value="@Model.DeviceId" />
-        <input type="date" name="date" value="@(Model.FilterDate.ToString("yyyy-MM-dd") ?? string.Empty)" class="border border-gray-200 dark:border-gray-700 rounded px-2 py-1 text-sm bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-200" />
-        <button class="px-3 py-1 bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 rounded text-sm dark:text-slate-200">Filter</button>
-      </form>
+    <div class="flex items-center gap-2">
+      @{ 
+        var prevDate = Model.FilterDate.AddDays(-1).ToString("yyyy-MM-dd");
+        var nextDate = Model.FilterDate.AddDays(1).ToString("yyyy-MM-dd");
+      }
+      <a class="px-3 py-1 bg-white dark:bg-slate-800 dark:border-gray-700 border border-gray-200 rounded shadow-sm text-sm dark:text-slate-200"
+         href="?deviceId=@Model.DeviceId&date=@prevDate">Previous</a>
+      <a class="px-3 py-1 bg-white dark:bg-slate-800 dark:border-gray-700 border border-gray-200 rounded shadow-sm text-sm dark:text-slate-200"
+         href="?deviceId=@Model.DeviceId&date=@nextDate">Next</a>
     </div>
   </header>
 
   <section class="mt-2">
-    <div class="mt-2 grid grid-cols-2 gap-2">
-      <div class="bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 rounded p-3">
-        <div class="text-xs text-slate-500 dark:text-slate-400">Total uptime</div>
-        <div class="text-lg font-semibold text-slate-800 dark:text-slate-200">@Model.UptimePercent.ToString("F1")% (@Model.TotalOnDuration.ToDisplayString())</div>
+    <div class="p-3 bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 rounded flex items-center justify-between">
+      <div>
+        <div class="text-xs text-slate-500">@Model.TotalOnDuration.ToDisplayString() up • @Model.TotalOffDuration.ToDisplayString() down</div>
       </div>
-
-      <div class="bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 rounded p-3">
-        <div class="text-xs text-slate-500 dark:text-slate-400">Total downtime</div>
-        <div class="text-lg font-semibold text-slate-800 dark:text-slate-200">@Model.DowntimePercent.ToString("F1")% (@Model.TotalOffDuration.ToDisplayString())</div>
+      <div class="w-24 sm:w-40">
+          <div class="flex items-center gap-3">
+            <div class="flex-1">
+              <div class="h-2 bg-gray-200 dark:bg-gray-700 rounded overflow-hidden" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="@((int)Math.Round(Model.UptimePercent))">
+                <div class="h-2 bg-emerald-500 dark:bg-emerald-400 transition-all duration-200" style="width:@((int)Math.Round(Model.UptimePercent))%"></div>
+              </div>
+            </div>
+            <div class="flex flex-row gap-1 text-xs text-slate-500 text-right whitespace-nowrap">
+              <div class="font-semibold dark:text-slate-100">@Model.UptimePercent.ToString("F0")%</div>
+              <div class="text-xs text-slate-500">up</div>
+            </div>
+          </div>
       </div>
     </div>
   </section>
@@ -38,10 +48,9 @@
       <table class="min-w-full text-sm">
         <thead class="bg-slate-50 dark:bg-slate-900 text-slate-600 dark:text-slate-300">
           <tr>
-            <th class="px-3 py-2 text-left">Event</th>
-            <th class="px-3 py-2 text-left">Start</th>
-            <th class="px-3 py-2 text-left">End</th>
-            <th class="px-3 py-2 text-left">Duration</th>
+            <th class="px-3 py-2 text-center">Event</th>
+            <th class="px-3 py-2 text-center">Date</th>
+            <th class="px-3 py-2 text-right">Duration</th>
           </tr>
         </thead>
         <tbody>
@@ -54,7 +63,7 @@
               foreach (var evd in Model.DisplayEvents)
                   {
                   <tr class="border-t border-gray-200 dark:border-gray-700">
-                    <td class="px-3 py-2 dark:text-slate-200">
+                    <td class="px-3 py-2 dark:text-slate-200 text-center">
                       @if (evd.IsPowerOn)
                       {
                         <span class="inline-flex items-center gap-1 bg-emerald-100 dark:bg-emerald-900 text-emerald-800 dark:text-emerald-200 px-2 py-0.5 rounded text-xs font-medium">
@@ -70,11 +79,8 @@
                         </span>
                       }
                     </td>
-                    <td class="px-3 py-2 dark:text-slate-200">@evd.DisplayStart.ToString("dd.MM.yyyy HH:mm")</td>
-                    <td class="px-3 py-2 dark:text-slate-200">@(evd.DisplayEnd.HasValue ? evd.DisplayEnd.Value.ToString("dd.MM.yyyy HH:mm") : "—")</td>
-                    <td class="px-3 py-2 dark:text-slate-200">
-                      @(((int)evd.DisplayDuration.TotalHours).ToString("D2") + ":" + evd.DisplayDuration.Minutes.ToString("D2"))                          
-                    </td>
+                    <td class="px-3 py-2 dark:text-slate-200 text-center">@evd.DisplayDate.ToString("dd.MM.yyyy HH:mm")</td>
+                    <td class="px-3 py-2 dark:text-slate-200 text-right">@evd.DisplayDuration.ToDisplayString()</td>                      
                   </tr>
               }
           }

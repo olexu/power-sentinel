@@ -2,77 +2,139 @@
 @model PowerSentinel.Pages.Admin.Events.IndexModel
 
 <h2>Events</h2>
-<p><a asp-page="Create" class="inline-block bg-indigo-600 text-white rounded px-3 py-1 text-sm hover:bg-indigo-700">Create new event</a></p>
+<p><a asp-page="Create"
+          class="inline-block bg-indigo-600 text-white rounded px-3 py-1 text-sm hover:bg-indigo-700">Create new event</a>
+</p>
+<!-- export UI removed here; will reuse the filter select below -->
 
-<form method="get" class="flex items-center gap-2 mb-2 mt-2">
-    <label class="text-sm text-gray-700 dark:text-gray-300">Device:</label>
-    <select name="deviceId" class="border rounded p-1 text-sm">
-        <option value="">All devices</option>
-        @foreach (var id in Model.DeviceIds)
-        {
-            <option value="@id" selected="@(Model.DeviceIdFilter == id ? "selected" : null)">@id</option>
-        }
-    </select>
-    <label class="text-sm text-gray-700 dark:text-gray-300">Page size:</label>
-    <select name="pageSize" class="border rounded p-1 text-sm">
-        <option value="10" selected="@(Model.PageSize==10 ? "selected" : null)">10</option>
-        <option value="25" selected="@(Model.PageSize==25 ? "selected" : null)">25</option>
-        <option value="50" selected="@(Model.PageSize==50 ? "selected" : null)">50</option>
-    </select>
-    <button type="submit" class="bg-gray-200 dark:bg-gray-700 rounded px-3 py-1 text-sm">Filter</button>
-</form>
+@if (!string.IsNullOrEmpty(Model.StatusMessage))
+{
+    <div class="mb-4 text-sm text-gray-700">@Model.StatusMessage</div>
+}
+<div class="flex flex-row gap-2 justify-between">
+    <form method="get" class="flex items-center gap-2 mb-2 mt-2">
+        <label class="text-sm text-gray-700 dark:text-gray-300">Device:</label>
+        <select name="deviceId" id="deviceFilterSelect" class="border rounded p-1 text-sm">
+            <option value="">All devices</option>
+            @foreach (var id in Model.DeviceIds)
+            {
+                <option value="@id" selected="@(Model.DeviceIdFilter == id ? "selected" : null)">@id</option>
+            }
+        </select>
+        <label class="text-sm text-gray-700 dark:text-gray-300">Page size:</label>
+        <select name="pageSize" class="border rounded p-1 text-sm">
+            <option value="10" selected="@(Model.PageSize==10 ? "selected" : null)">10</option>
+            <option value="25" selected="@(Model.PageSize==25 ? "selected" : null)">25</option>
+            <option value="50" selected="@(Model.PageSize==50 ? "selected" : null)">50</option>
+        </select>
+        <button type="submit" class="bg-gray-200 dark:bg-gray-700 rounded px-3 py-1 text-sm">Filter</button>
+        <button type="button" id="exportBtn"
+                class="bg-green-600 text-white rounded px-3 py-1 text-sm disabled:bg-gray-500" disabled>Export</button>
+    </form>
+
+    <form method="post" enctype="multipart/form-data" asp-page-handler="Import" class="flex items-center gap-2 ">
+        <input id="importFileInput" type="file" name="file" accept="application/json"
+               class="border rounded px-1 w-32" />
+        <button type="submit" id="importBtn" class="bg-red-800 text-white rounded px-3 py-1 text-sm">Import</button>
+    </form>
+
+    <form method="post" asp-page="/Admin/Events/Index" asp-page-handler="Export" id="hiddenExportForm"
+          style="display:none">
+        <input type="hidden" name="deviceId" id="hiddenExportDevice" />
+    </form>
+</div>
 
 <div class="overflow-auto h-full">
     <table class="min-w-full divide-y divide-gray-200">
         <thead class="bg-gray-50 dark:bg-gray-800">
             <tr>
-                <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Id</th>
-                <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">DeviceId</th>
-                <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">IsPowerOn</th>
-                <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">StartAt</th>
-                <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">EndAt</th>
-                <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Actions</th>
-            </tr>
-        </thead>
-        <tbody class="bg-white dark:bg-gray-900 divide-y divide-gray-200">
-        @foreach (var e in Model.Events)
-        {
-            <tr class="odd:bg-white even:bg-gray-50 dark:odd:bg-transparent dark:even:bg-transparent hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
-                <td class="px-3 py-2 whitespace-nowrap text-xs text-gray-900 dark:text-gray-100">@e.Id</td>
-                <td class="px-3 py-2 whitespace-nowrap text-xs text-gray-900 dark:text-gray-100">@e.DeviceId</td>
-                <td class="px-3 py-2 whitespace-nowrap text-xs text-gray-900 dark:text-gray-100">@e.IsPowerOn</td>
-                <td class="px-3 py-2 whitespace-nowrap text-xs text-gray-500 dark:text-gray-300">@e.StartAt</td>
-                <td class="px-3 py-2 whitespace-nowrap text-xs text-gray-500 dark:text-gray-300">@(e.EndAt?.ToString() ?? "")</td>
-                <td class="px-3 py-2 whitespace-nowrap text-xs">
-                    <a asp-page="Edit" asp-route-id="@e.Id" class="text-indigo-600 dark:text-indigo-300 hover:text-indigo-900 dark:hover:text-indigo-100 text-xs">Edit</a>
-                    <span class="px-1 text-gray-300 dark:text-gray-600">|</span>
-                    <a asp-page="Delete" asp-route-id="@e.Id" class="text-red-600 dark:text-red-400 hover:text-red-800 text-xs">Delete</a>
-                </td>
-            </tr>
-        }
-        </tbody>
-    </table>
-</div>
+                <th
+                    class="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                    Id</th>
+                    <th
+                        class="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                        DeviceId</th>
+                        <th
+                            class="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                            IsPowerOn</th>
+                            <th
+                                class="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                Date</th>
+                                <th
+                                    class="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                    Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white dark:bg-gray-900 divide-y divide-gray-200">
+                                @foreach (var e in Model.Events)
+                                {
+                                    <tr
+                                        class="odd:bg-white even:bg-gray-50 dark:odd:bg-transparent dark:even:bg-transparent hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+                                        <td class="px-3 py-2 whitespace-nowrap text-xs text-gray-900 dark:text-gray-100">@e.Id</td>
+                                        <td class="px-3 py-2 whitespace-nowrap text-xs text-gray-900 dark:text-gray-100">@e.DeviceId</td>
+                                        <td class="px-3 py-2 whitespace-nowrap text-xs text-gray-900 dark:text-gray-100">@e.IsPowerOn</td>
+                                        <td class="px-3 py-2 whitespace-nowrap text-xs text-gray-500 dark:text-gray-300">@e.Date</td>
+                                        <td class="px-3 py-2 whitespace-nowrap text-xs">
+                                            <a asp-page="Edit" asp-route-id="@e.Id"
+                                               class="text-indigo-600 dark:text-indigo-300 hover:text-indigo-900 dark:hover:text-indigo-100 text-xs">Edit</a>
+                                            <span class="px-1 text-gray-300 dark:text-gray-600">|</span>
+                                            <a asp-page="Delete" asp-route-id="@e.Id"
+                                               class="text-red-600 dark:text-red-400 hover:text-red-800 text-xs">Delete</a>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
 
-<div class="mt-4 flex items-center justify-between">
-    <div class="text-sm text-gray-600 dark:text-gray-300">Showing page @Model.PageNumber of @Model.TotalPages (total @Model.TotalCount)</div>
-    <div class="flex items-center gap-2">
-        @if (Model.PageNumber > 1)
-        {
-            <a asp-page="Index" asp-route-deviceId="@Model.DeviceIdFilter" asp-route-pageNumber="@(Model.PageNumber-1)" asp-route-pageSize="@Model.PageSize" class="px-2 py-1 bg-white dark:bg-gray-800 border rounded text-sm">Prev</a>
-        }
-        else
-        {
-            <span class="px-2 py-1 text-sm text-gray-400">Prev</span>
-        }
+                    <div class="mt-4 flex items-center justify-between">
+                        <div class="text-sm text-gray-600 dark:text-gray-300">Showing page @Model.PageNumber of @Model.TotalPages (total
+                            @Model.TotalCount)</div>
+                            <div class="flex items-center gap-2">
+                                @if (Model.PageNumber > 1)
+                                {
+                                    <a asp-page="Index" asp-route-deviceId="@Model.DeviceIdFilter" asp-route-pageNumber="@(Model.PageNumber-1)"
+                                       asp-route-pageSize="@Model.PageSize"
+                                       class="px-2 py-1 bg-white dark:bg-gray-800 border rounded text-sm">Prev</a>
+                                }
+                                else
+                                {
+                                    <span class="px-2 py-1 text-sm text-gray-400">Prev</span>
+                                }
 
-        @if (Model.PageNumber < Model.TotalPages)
-        {
-            <a asp-page="Index" asp-route-deviceId="@Model.DeviceIdFilter" asp-route-pageNumber="@(Model.PageNumber+1)" asp-route-pageSize="@Model.PageSize" class="px-2 py-1 bg-white dark:bg-gray-800 border rounded text-sm">Next</a>
-        }
-        else
-        {
-            <span class="px-2 py-1 text-sm text-gray-400">Next</span>
-        }
-    </div>
-</div>
+                                @if (Model.PageNumber < Model.TotalPages)
+                                {
+                                    <a asp-page="Index" asp-route-deviceId="@Model.DeviceIdFilter" asp-route-pageNumber="@(Model.PageNumber+1)"
+                                       asp-route-pageSize="@Model.PageSize"
+                                       class="px-2 py-1 bg-white dark:bg-gray-800 border rounded text-sm">Next</a>
+                                }
+                                else
+                                {
+                                    <span class="px-2 py-1 text-sm text-gray-400">Next</span>
+                                }
+                            </div>
+                        </div>
+
+                        <script>
+                            (function () {
+                                const filter = document.getElementById('deviceFilterSelect');
+                                const exportBtn = document.getElementById('exportBtn');
+                                const hiddenForm = document.getElementById('hiddenExportForm');
+                                const hiddenInput = document.getElementById('hiddenExportDevice');
+                                if (!filter || !exportBtn || !hiddenForm || !hiddenInput) return;
+
+                                const update = () => {
+                                    const enabled = !!filter.value;
+                                    exportBtn.disabled = !enabled;
+                                };
+
+                                filter.addEventListener('change', update);
+                                update();
+
+                                exportBtn.addEventListener('click', function () {
+                                    if (!filter.value) return;
+                                    hiddenInput.value = filter.value;
+                                    hiddenForm.submit();
+                                });
+                            })();
+                        </script>

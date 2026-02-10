@@ -30,8 +30,7 @@ public class EditModel : PageModel
         if (existing == null) return RedirectToPage("Index");
         existing.DeviceId = Event.DeviceId;
         existing.IsPowerOn = Event.IsPowerOn;
-        existing.StartAt = Event.StartAt;
-        existing.EndAt = Event.EndAt;
+        existing.Date = Event.Date;
         await _db.SaveChangesAsync();
         return RedirectToPage("Index");
     }

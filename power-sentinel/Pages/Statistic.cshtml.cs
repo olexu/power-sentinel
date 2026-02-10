@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using PowerSentinel.Data;
+using PowerSentinel.Models;
 
 namespace PowerSentinel.Pages;
 
@@ -50,24 +51,28 @@ public class StatisticModel : PageModel
                 device = d,
                 lastEvent = _db.Events
                     .Where(e => e.DeviceId == d.Id)
-                    .OrderByDescending(e => e.StartAt)
+                    .OrderByDescending(e => e.Date)
                     .FirstOrDefault()
             })
             .FirstOrDefaultAsync();
         var lastEvent = deviceInfo?.lastEvent;
-        bool? isOn = lastEvent != null && lastEvent.EndAt == null ? lastEvent.IsPowerOn : null;
-        TimeSpan? timeSpan = lastEvent != null && lastEvent.EndAt == null ? dateTimeNow - lastEvent.StartAt : null;
+        bool? isOn = lastEvent != null ? lastEvent.IsPowerOn : null;
+        TimeSpan? timeSpan = lastEvent != null ? dateTimeNow - lastEvent.Date : null;
         DeviceInfo = new DeviceInfo(deviceInfo?.device.Id ?? string.Empty, deviceInfo?.device.Description ?? deviceInfo?.device.Id ?? string.Empty, isOn, timeSpan);
 
-        var events = await _db.Events.AsQueryable()
-            .Where(e =>
-                e.DeviceId == DeviceId && (
-                    (e.StartAt >= filterDateTimeStart && e.StartAt < filterDateTimeEnd) ||
-                    (e.EndAt == null) ||
-                    (e.EndAt != null && e.EndAt >= filterDateTimeStart && e.EndAt < filterDateTimeEnd)
-                ))
-                .OrderBy(e => e.StartAt)
+        var eventsInRange = await _db.Events
+            .Where(e => e.DeviceId == DeviceId && e.Date >= filterDateTimeStart && e.Date < filterDateTimeEnd)
+            .OrderBy(e => e.Date)
             .ToListAsync();
+
+        var lastEventBeforeRange = await _db.Events
+            .Where(e => e.DeviceId == DeviceId && e.Date < filterDateTimeStart)
+            .OrderByDescending(e => e.Date)
+            .FirstOrDefaultAsync();
+
+        var events = new List<Event>(eventsInRange);
+        if (lastEventBeforeRange != null)
+            events.Insert(0, lastEventBeforeRange);
 
         double TotalUptimeSeconds = 0;
         double TotalDowntimeSeconds = 0;
@@ -80,12 +85,18 @@ public class StatisticModel : PageModel
             double onSeconds = 0;
             double offSeconds = 0;
 
-            foreach (var ev in events)
+            for (int i = 0; i < events.Count; i++)
             {
-                if (ev.StartAt >= dateTimeEnd || ev.EndAt.HasValue && ev.EndAt <= dateTimeStart) continue;
+                var ev = events[i];
 
-                var evStart = ev.StartAt < dateTimeStart ? dateTimeStart : ev.StartAt;
-                var evEnd = ev.EndAt.HasValue ? (ev.EndAt > dateTimeEnd ? dateTimeEnd : ev.EndAt.Value) : (dateTimeNow < dateTimeEnd ? dateTimeNow : dateTimeEnd);
+                DateTime nextDate = (i + 1 < events.Count)
+                    ? events[i + 1].Date
+                    : (dateTimeNow < filterDateTimeEnd ? dateTimeNow : filterDateTimeEnd);
+
+                if (ev.Date >= dateTimeEnd || nextDate <= dateTimeStart) continue;
+
+                var evStart = ev.Date < dateTimeStart ? dateTimeStart : ev.Date;
+                var evEnd = nextDate > dateTimeEnd ? dateTimeEnd : nextDate;
 
                 var seconds = (evEnd - evStart).TotalSeconds;
                 if (seconds > 0)
@@ -108,16 +119,21 @@ public class StatisticModel : PageModel
         OutageCount = 0;
         MaxOutageSeconds = 0;
 
-        foreach (var ev in events)
+        for (int i = 0; i < events.Count; i++)
         {
-            if (ev.IsPowerOn || ev.StartAt < filterDateTimeStart || ev.StartAt > filterDateTimeEnd) continue;
+            var ev = events[i];
+            if (ev.IsPowerOn || ev.Date < filterDateTimeStart || ev.Date >= filterDateTimeEnd) continue;
 
-            OutageCount++;
-            var evStart = ev.StartAt;
-            var evEnd = ev.EndAt.HasValue ? (ev.EndAt > filterDateTimeEnd ? filterDateTimeEnd : ev.EndAt.Value) : filterDateTimeEnd;
+            DateTime nextDate = (i + 1 < events.Count) ? events[i + 1].Date : filterDateTimeEnd;
+            var evStart = ev.Date;
+            var evEnd = nextDate > filterDateTimeEnd ? filterDateTimeEnd : nextDate;
 
             var seconds = (evEnd - evStart).TotalSeconds;
-            if (seconds > MaxOutageSeconds) MaxOutageSeconds = seconds;
+            if (seconds > 0)
+            {
+                OutageCount++;
+                if (seconds > MaxOutageSeconds) MaxOutageSeconds = seconds;
+            }
         }
 
         var periodSeconds = (filterDateTimeEnd - filterDateTimeStart).TotalSeconds;

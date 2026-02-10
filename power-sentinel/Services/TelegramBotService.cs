@@ -14,7 +14,7 @@ namespace PowerSentinel.Services;
 
 public interface ITelegramBotService
 {
-    Task SendPowerNotificationAsync(bool isOn, string deviceId, string description, TimeSpan? previousDuration, CancellationToken ct = default);
+    Task SendPowerNotificationAsync(string deviceId, string deviceDescription, bool isOn, TimeSpan? lastEventDuration, CancellationToken ct = default);
 }
 
 public class TelegramBotService : BackgroundService, ITelegramBotService
@@ -287,16 +287,16 @@ public class TelegramBotService : BackgroundService, ITelegramBotService
         }
     }
 
-    public async Task SendPowerNotificationAsync(bool isOn, string deviceId, string deviceDescription, TimeSpan? prevEventDuration, CancellationToken ct = default)
+    public async Task SendPowerNotificationAsync(string deviceId, string deviceDescription, bool isOn, TimeSpan? lastEventDuration, CancellationToken ct = default)
     {
         if (_client == null) return;
 
         string text;
 
         if (isOn)
-            text = $"🟢 {deviceDescription} is ON.\n⏱️ Downtime: {prevEventDuration.ToDisplayString()}";
+            text = $"🟢 {deviceDescription} is ON.\n⏱️ Downtime: {lastEventDuration.ToDisplayString()}";
         else
-            text = $"🔴 {deviceDescription} is OFF.\n⏱️ Uptime: {prevEventDuration.ToDisplayString()}";
+            text = $"🔴 {deviceDescription} is OFF.\n⏱️ Uptime: {lastEventDuration.ToDisplayString()}";
 
         using var scope = _services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();

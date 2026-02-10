@@ -1,3 +1,51 @@
 @import "tailwindcss";
 
+
 @custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  --scroll-track: transparent;
+  --scroll-thumb-start: #CFCFCF;
+  --scroll-thumb-end: #AFAFAF;
+  --scroll-thumb-border: #F7F7F8;
+  --scroll-thumb-hover: #8E8E8E;
+}
+
+:where(.dark, .dark *) {
+  --scroll-track: transparent;
+  --scroll-thumb-start: #3A3A3A;
+  --scroll-thumb-end: #222222;
+  --scroll-thumb-border: rgba(255,255,255,0.03);
+  --scroll-thumb-hover: #4F4F4F;
+}
+
+@layer utilities {
+  .scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: var(--scroll-thumb-start) var(--scroll-track);
+  }
+  .scrollbar::-webkit-scrollbar {
+    width: 12px;
+    height: 12px;
+  }
+  .scrollbar::-webkit-scrollbar-track {
+    background: var(--scroll-track);
+    border-radius: 9999px;
+  }
+  .scrollbar::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, var(--scroll-thumb-start), var(--scroll-thumb-end));
+    border-radius: 9999px;
+    border: 3px solid var(--scroll-thumb-border);
+    background-clip: padding-box;
+    transition: opacity .18s ease, box-shadow .18s ease;
+    opacity: .95;
+  }
+  .scrollbar::-webkit-scrollbar-thumb:hover,
+  .scrollbar::-webkit-scrollbar-thumb:active {
+    background: var(--scroll-thumb-hover);
+    opacity: 1;
+  }
+  .scrollbar:focus-visible::-webkit-scrollbar-thumb {
+    box-shadow: 0 0 0 3px rgba(199,139,217,0.22);
+  }
+}

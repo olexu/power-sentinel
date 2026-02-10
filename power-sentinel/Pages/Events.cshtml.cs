@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using PowerSentinel.Data;
+using PowerSentinel.Models;
+using System.Diagnostics;
 using System.Globalization;
 
 namespace PowerSentinel.Pages;
@@ -38,13 +40,13 @@ public class EventsModel : PageModel
                 device = d,
                 lastEvent = _db.Events
                     .Where(e => e.DeviceId == d.Id)
-                    .OrderByDescending(e => e.StartAt)
+                    .OrderByDescending(e => e.Date)
                     .FirstOrDefault()
             })
             .FirstOrDefaultAsync();
         var lastEvent = deviceInfo?.lastEvent;
-        bool? isOn = lastEvent != null && lastEvent.EndAt == null ? lastEvent.IsPowerOn : null;
-        TimeSpan? timeSpan = lastEvent != null && lastEvent.EndAt == null ? dateTimeNow - lastEvent.StartAt : null;
+        bool? isOn = lastEvent != null ? lastEvent.IsPowerOn : null;
+        TimeSpan? timeSpan = lastEvent != null ? dateTimeNow - lastEvent.Date : null;
         DeviceInfo = new DeviceInfo(deviceInfo?.device.Id ?? string.Empty, deviceInfo?.device.Description ?? deviceInfo?.device.Id ?? string.Empty, isOn, timeSpan);
 
         if (!string.IsNullOrWhiteSpace(date) && DateTime.TryParseExact(date, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var dt))
@@ -52,23 +54,43 @@ public class EventsModel : PageModel
         else
             FilterDate = dateTimeNow.Date;
 
-        var query = _db.Events.AsQueryable().Where(e => e.DeviceId == DeviceId);
-
         var filterDateTimeStart = FilterDate.Date;
         var filterDateTimeEnd = filterDateTimeStart.AddDays(1);
 
-        query = query.Where(e => (e.StartAt >= filterDateTimeStart && e.StartAt < filterDateTimeEnd) || (e.EndAt != null && e.EndAt >= filterDateTimeStart && e.EndAt < filterDateTimeEnd));
-        var events = await query.OrderBy(e => e.StartAt).ToListAsync();
+        var eventsInRange = await _db.Events
+            .Where(e => e.DeviceId == DeviceId && e.Date >= filterDateTimeStart && e.Date < filterDateTimeEnd)
+            .OrderBy(e => e.Date)
+            .ToListAsync();
 
-        foreach (var ev in events)
+        var lastEventBeforeRange = await _db.Events
+            .Where(e => e.DeviceId == DeviceId && e.Date < filterDateTimeStart)
+            .OrderByDescending(e => e.Date)
+            .FirstOrDefaultAsync();
+
+        var events = new List<Event>(eventsInRange);
+        if (lastEventBeforeRange != null)
+            events.Insert(0, lastEventBeforeRange);
+
+        for (int i = 0; i < events.Count; i++)
         {
-            var fromDateTime = ev.StartAt < filterDateTimeStart ? filterDateTimeStart.Date : ev.StartAt;
-            var toTime = ev.EndAt.HasValue ? (ev.EndAt.Value < filterDateTimeEnd ? ev.EndAt.Value : filterDateTimeEnd) : dateTimeNow;
+            var ev = events[i];
+            var fromDateTime = ev.Date < filterDateTimeStart ? filterDateTimeStart : ev.Date;
 
+            DateTime toDateTime;
+            if (i + 1 < events.Count)
+            {
+                var nextEventDate = events[i + 1].Date;
+                toDateTime = nextEventDate < filterDateTimeEnd ? nextEventDate : filterDateTimeEnd;
+            }
+            else
+            {
+                toDateTime = dateTimeNow < filterDateTimeEnd ? dateTimeNow : filterDateTimeEnd;
+            }
+            if (toDateTime < fromDateTime)
+                continue;
             DisplayEvents.Add(new EventDisplay(ev.IsPowerOn,
-                ev.StartAt,
-                ev.EndAt,
-                toTime - fromDateTime));
+                ev.Date,
+                toDateTime - fromDateTime));
         }
 
         TotalOnDuration = TimeSpan.Zero;
@@ -95,14 +117,12 @@ public class EventsModel : PageModel
 public class EventDisplay
 {
     public bool IsPowerOn { get; }
-    public DateTime DisplayStart { get; }
-    public DateTime? DisplayEnd { get; }
+    public DateTime DisplayDate { get; }
     public TimeSpan DisplayDuration { get; }
-    public EventDisplay(bool isPowerOn, DateTime ds, DateTime? de, TimeSpan duration)
+    public EventDisplay(bool isPowerOn, DateTime ds, TimeSpan duration)
     {
         IsPowerOn = isPowerOn;
-        DisplayStart = ds;
-        DisplayEnd = de;
+        DisplayDate = ds;
         DisplayDuration = duration;
     }
 }

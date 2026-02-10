@@ -20,7 +20,7 @@ public class IndexModel : PageModel
                 device = d,
                 lastEvent = _db.Events
                     .Where(e => e.DeviceId == d.Id)
-                    .OrderByDescending(e => e.StartAt)
+                    .OrderByDescending(e => e.Date)
                     .FirstOrDefault()
             })
             .ToListAsync();
@@ -28,8 +28,8 @@ public class IndexModel : PageModel
         foreach (var item in deviceEvents)
         {
             var ev = item.lastEvent;
-            bool? isOn = ev != null && ev.EndAt == null ? ev.IsPowerOn : null;
-            TimeSpan? timeSpan = ev != null && ev.EndAt == null ? dateTimeNow - ev.StartAt : null;
+            bool? isOn = ev != null ? ev.IsPowerOn : null;
+            TimeSpan? timeSpan = ev != null ? dateTimeNow - ev.Date : null;
             Devices.Add(new DeviceInfo(item.device.Id, item.device.Description ?? item.device.Id, isOn, timeSpan));
         }
     }

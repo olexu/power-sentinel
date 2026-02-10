@@ -1,4 +1,8 @@
+using System.Text;
+using System.Text.Json;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using PowerSentinel.Data;
@@ -14,6 +18,9 @@ public class IndexModel : PageModel
 
     public List<Event> Events { get; private set; } = new();
     public List<string> DeviceIds { get; private set; } = new();
+
+    [TempData]
+    public string StatusMessage { get; set; } = string.Empty;
 
     public string? DeviceIdFilter { get; private set; }
     public int PageNumber { get; private set; } = 1;
@@ -37,9 +44,83 @@ public class IndexModel : PageModel
         TotalPages = (int)Math.Ceiling(TotalCount / (double)PageSize);
 
         Events = await query
-            .OrderByDescending(e => e.StartAt)
+            .OrderByDescending(e => e.Date)
             .Skip((PageNumber - 1) * PageSize)
             .Take(PageSize)
             .ToListAsync();
     }
+
+    public async Task<IActionResult> OnPostExportAsync(string? deviceId)
+    {
+        if (string.IsNullOrWhiteSpace(deviceId))
+        {
+            StatusMessage = "Please select a device to export.";
+            return RedirectToPage();
+        }
+
+        var events = await _db.Events.Where(e => e.DeviceId == deviceId).OrderByDescending(e => e.Date).ToListAsync();
+
+        var export = events.Select(e => new
+        {
+            e.DeviceId,
+            e.IsPowerOn,
+            Date = new DateTime(e.Date.Ticks - (e.Date.Ticks % TimeSpan.TicksPerSecond), e.Date.Kind),
+        }).ToList();
+
+        var opts = new JsonSerializerOptions { WriteIndented = true };
+        var json = JsonSerializer.Serialize(export, opts);
+        var bytes = Encoding.UTF8.GetBytes(json);
+
+        // sanitize filename
+        var invalid = Path.GetInvalidFileNameChars();
+        var safeId = string.Concat(deviceId.Where(ch => !invalid.Contains(ch)));
+        var filename = string.IsNullOrEmpty(safeId) ? "events.json" : safeId + ".json";
+
+        return File(bytes, "application/json", filename);
+    }
+
+    public async Task<IActionResult> OnPostImportAsync(IFormFile? file)
+    {
+        if (file == null || file.Length == 0)
+        {
+            StatusMessage = "No file uploaded.";
+            return RedirectToPage();
+        }
+
+        try
+        {
+            using var stream = file.OpenReadStream();
+            var importList = await JsonSerializer.DeserializeAsync<List<ImportedEvent>>(stream, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            if (importList == null || importList.Count == 0)
+            {
+                StatusMessage = "No events found in uploaded file.";
+                return RedirectToPage();
+            }
+
+            var toAdd = importList.Select(i => new Event {
+                DeviceId = i.DeviceId ?? string.Empty,
+                IsPowerOn = i.IsPowerOn,
+                Date = i.Date,
+            }).ToList();
+
+            await _db.Events.AddRangeAsync(toAdd);
+            var imported = await _db.SaveChangesAsync();
+
+            StatusMessage = $"Imported {toAdd.Count} events (DB changes: {imported}).";
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = "Import failed: " + ex.Message;
+        }
+
+        return RedirectToPage();
+    }
+
+    private class ImportedEvent
+    {
+        public string? DeviceId { get; set; }
+        public bool IsPowerOn { get; set; }
+        public DateTime Date { get; set; }
+    }
+
 }

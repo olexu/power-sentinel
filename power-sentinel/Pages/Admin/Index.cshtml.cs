@@ -5,6 +5,8 @@ using Microsoft.EntityFrameworkCore;
 using PowerSentinel.Data;
 using PowerSentinel.Models;
 using System.Text;
+using System.IO;
+using System.Linq;
 using System.Text.Json;
 
 namespace PowerSentinel.Pages.Admin;
@@ -20,26 +22,6 @@ public class IndexModel : PageModel
 
     public async Task OnGetAsync()
     {
-        // no-op, page shows admin actions
-        await Task.CompletedTask;
-    }
-
-    public async Task<IActionResult> OnPostExportAsync()
-    {
-        var events = await _db.Events.OrderByDescending(e => e.StartAt).ToListAsync();
-
-        var export = events.Select(e => new {
-            e.DeviceId,
-            e.IsPowerOn,
-            e.StartAt,
-            e.EndAt
-        }).ToList();
-
-        var opts = new JsonSerializerOptions { WriteIndented = true };
-        var json = JsonSerializer.Serialize(export, opts);
-        var bytes = Encoding.UTF8.GetBytes(json);
-
-        return File(bytes, "application/json", "events.json");
     }
 
     public async Task<IActionResult> OnPostImportAsync(IFormFile? file)
@@ -63,8 +45,7 @@ public class IndexModel : PageModel
             var toAdd = importList.Select(i => new Event {
                 DeviceId = i.DeviceId ?? string.Empty,
                 IsPowerOn = i.IsPowerOn,
-                StartAt = i.StartAt,
-                EndAt = i.EndAt
+                Date = i.Date,
             }).ToList();
 
             await _db.Events.AddRangeAsync(toAdd);
@@ -82,90 +63,59 @@ public class IndexModel : PageModel
 
     public async Task<IActionResult> OnPostGenerateAsync(string? deviceId)
     {
-        var rng = new Random();
-
-        var id = string.IsNullOrWhiteSpace(deviceId) ? Guid.NewGuid().ToString() : deviceId!;
-
-        var device = await _db.Devices.FindAsync(id);
-        if (device == null)
+        try
         {
-            device = new Device { Id = id, Description = id };
-            _db.Devices.Add(device);
-            await _db.SaveChangesAsync();
-        }
+            var rng = new Random();
 
-        var endDate = DateTime.Now;
-        var startDate = endDate.AddMonths(-2);
+            var id = string.IsNullOrWhiteSpace(deviceId) ? $"gen-{Guid.NewGuid():N}" : deviceId!;
 
-        var events = new List<Event>();
-
-        DateTime currentStart = startDate;
-        bool createdSameDay = false, createdMultiDay = false;
-        var nextIsOn = rng.Next(0, 2) == 0;
-
-        while (currentStart < endDate)
-        {
-            var isMultiDay = rng.NextDouble() < 0.25;
-            DateTime eventStart = currentStart;
-            DateTime eventEnd;
-            if (!isMultiDay)
+            // ensure device exists
+            var device = await _db.Devices.FindAsync(id);
+            if (device == null)
             {
-                var endOfDay = new DateTime(eventStart.Year, eventStart.Month, eventStart.Day, 23, 59, 0, DateTimeKind.Utc);
-                var minutesAvailable = (int)Math.Floor((endOfDay - eventStart).TotalMinutes);
-
-                if (minutesAvailable < 1)
-                {
-                    var days = rng.Next(1, 3);
-                    eventEnd = eventStart.AddDays(days).AddHours(rng.Next(0, 24)).AddMinutes(rng.Next(0, 60));
-                    createdMultiDay = true;
-                }
-                else
-                {
-                    var maxMinutes = Math.Min(minutesAvailable, 12 * 60);
-                    var minMinutes = Math.Min(30, maxMinutes);
-                    var durationMinutes = rng.Next(minMinutes, maxMinutes + 1);
-                    eventEnd = eventStart.AddMinutes(durationMinutes);
-                    createdSameDay = true;
-                }
-            }
-            else
-            {
-                var days = rng.Next(1, 6);
-                eventEnd = eventStart.AddDays(days).AddHours(rng.Next(0, 24)).AddMinutes(rng.Next(0, 60));
-                createdMultiDay = true;
+                device = new Device { Id = id, Description = "Generated device" };
+                await _db.Devices.AddAsync(device);
+                await _db.SaveChangesAsync();
             }
 
-            if (eventEnd > endDate) eventEnd = endDate;
+            // generate events over the last 30 days
+            const int eventsCount = 500;
+            var days = 30;
+            var start = DateTime.UtcNow.AddDays(-days);
+            var totalSeconds = TimeSpan.FromDays(days).TotalSeconds;
 
-            events.Add(new Event { DeviceId = id, IsPowerOn = nextIsOn, StartAt = eventStart, EndAt = eventEnd });
+            var events = new List<Event>(eventsCount);
+            bool lastState = rng.Next(2) == 0;
 
-            nextIsOn = !nextIsOn;
-            currentStart = eventEnd;
+            for (int i = 0; i < eventsCount; i++)
+            {
+                // evenly space then add some jitter
+                var frac = (double)i / Math.Max(1, eventsCount - 1);
+                var seconds = frac * totalSeconds + rng.NextDouble() * 3600.0 - 1800.0; // +/-30m jitter
+                var date = start.AddSeconds(seconds);
+
+                // small chance to flip state; otherwise keep the last state
+                if (rng.NextDouble() < 0.2)
+                    lastState = !lastState;
+
+                events.Add(new Event
+                {
+                    DeviceId = id,
+                    IsPowerOn = lastState,
+                    Date = date,
+                });
+            }
+
+            await _db.Events.AddRangeAsync(events);
+            var saved = await _db.SaveChangesAsync();
+
+            StatusMessage = $"Generated {events.Count} events for device {id} (DB changes: {saved}).";
         }
-
-        if (!createdMultiDay)
+        catch (Exception ex)
         {
-            var sampleStart = endDate.AddDays(-10);
-            var sampleEnd = sampleStart.AddDays(2);
-            events.Add(new Event { DeviceId = id, IsPowerOn = false, StartAt = sampleStart, EndAt = sampleEnd });
-        }
-        if (!createdSameDay)
-        {
-            var sampleStart = endDate.AddDays(-1).AddHours(9);
-            var sampleEnd = sampleStart.AddHours(3);
-            events.Add(new Event { DeviceId = id, IsPowerOn = true, StartAt = sampleStart, EndAt = sampleEnd });
+            StatusMessage = "Generate failed: " + ex.Message;
         }
 
-        events = events.OrderBy(e => e.StartAt).ToList();
-        for (int i = 1; i < events.Count; i++)
-        {
-            events[i].IsPowerOn = !events[i - 1].IsPowerOn;
-        }
-
-        await _db.Events.AddRangeAsync(events);
-        var added = await _db.SaveChangesAsync();
-
-        StatusMessage = $"Generated {events.Count} events for device {id} (DB changes: {added}).";
         return RedirectToPage();
     }
 
@@ -173,7 +123,6 @@ public class IndexModel : PageModel
     {
         public string? DeviceId { get; set; }
         public bool IsPowerOn { get; set; }
-        public DateTime StartAt { get; set; }
-        public DateTime? EndAt { get; set; }
+        public DateTime Date { get; set; }
     }
 }

@@ -17,15 +17,9 @@
     </div>
 
     <div>
-        <label asp-for="Event.StartAt" class="block mb-1">StartAt</label>
-        <input asp-for="Event.StartAt" type="datetime-local" class="border rounded p-2 w-full bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100" />
-        <span asp-validation-for="Event.StartAt" class="text-red-600 text-sm"></span>
-    </div>
-
-    <div>
-        <label asp-for="Event.EndAt" class="block mb-1">EndAt</label>
-        <input asp-for="Event.EndAt" type="datetime-local" class="border rounded p-2 w-full bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100" />
-        <span asp-validation-for="Event.EndAt" class="text-red-600 text-sm"></span>
+        <label asp-for="Event.Date" class="block mb-1">Date</label>
+        <input asp-for="Event.Date" type="datetime-local" step="1" class="border rounded p-2 w-full bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100" />
+        <span asp-validation-for="Event.Date" class="text-red-600 text-sm"></span>
     </div>
 
     <div class="flex items-center gap-3">
