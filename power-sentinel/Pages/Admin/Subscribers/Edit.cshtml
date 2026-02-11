@@ -7,7 +7,7 @@
 
     <div>
         <label asp-for="Subscriber.Id" class="block mb-1">Id</label>
-        <input asp-for="Subscriber.Id" readonly class="border rounded p-2 w-full bg-gray-100" />
+        <input asp-for="Subscriber.Id" readonly class="border rounded p-2 w-full" />
     </div>
 
     <div>
@@ -18,7 +18,13 @@
 
     <div>
         <label asp-for="Subscriber.DeviceId" class="block mb-1">DeviceId</label>
-        <input asp-for="Subscriber.DeviceId" class="border rounded p-2 w-full" />
+        <select asp-for="Subscriber.DeviceId" class="border rounded p-2 w-full">
+            <option value="">(none)</option>
+            @foreach (var d in Model.Devices)
+            {
+                <option value="@d.Id" selected="@(Model.Subscriber.DeviceId == d.Id ? "selected" : null)">@(!string.IsNullOrWhiteSpace(d.Description) ? d.Description : d.Id)</option>
+            }
+        </select>
         <span asp-validation-for="Subscriber.DeviceId" class="text-red-600 text-sm"></span>
     </div>
 

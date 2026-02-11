@@ -29,11 +29,8 @@ builder.Services.AddAuthorization(options =>
 
 var connectionString = builder.Configuration["DatabaseConnectionString"] ?? "Data Source=power-sentinel.db";
 builder.Services.AddDbContext<AppDbContext>(options => options.UseSqlite(connectionString));
-
 builder.Services.AddSingleton<TelegramBotService>();
 builder.Services.AddSingleton<ITelegramBotService>(sp => sp.GetRequiredService<TelegramBotService>());
-
-builder.Services.AddHostedService(sp => sp.GetRequiredService<TelegramBotService>());
 builder.Services.AddHostedService<MonitorService>();
 
 var app = builder.Build();

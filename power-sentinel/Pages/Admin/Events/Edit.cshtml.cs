@@ -4,6 +4,8 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using PowerSentinel.Data;
 using PowerSentinel.Models;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace PowerSentinel.Pages.Admin.Events;
 
@@ -16,11 +18,14 @@ public class EditModel : PageModel
     [BindProperty]
     public Event Event { get; set; } = new();
 
+    public List<Device> Devices { get; set; } = new();
+
     public async Task<IActionResult> OnGetAsync(long id)
     {
         var e = await _db.Events.FirstOrDefaultAsync(x => x.Id == id);
         if (e == null) return RedirectToPage("Index");
         Event = e;
+        Devices = await _db.Devices.OrderBy(d => d.Id).ToListAsync();
         return Page();
     }
 

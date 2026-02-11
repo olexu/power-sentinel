@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using PowerSentinel.Data;
 using PowerSentinel.Models;
+using System.Linq;
 
 namespace PowerSentinel.Pages.Admin.Subscribers;
 
@@ -16,11 +17,14 @@ public class EditModel : PageModel
     [BindProperty]
     public Subscriber Subscriber { get; set; } = new();
 
+    public List<Device> Devices { get; set; } = new();
+
     public async Task<IActionResult> OnGetAsync(int id)
     {
         var s = await _db.Subscribers.FirstOrDefaultAsync(x => x.Id == id);
         if (s == null) return RedirectToPage("Index");
         Subscriber = s;
+        Devices = await _db.Devices.OrderBy(d => d.Id).ToListAsync();
         return Page();
     }
 
@@ -29,7 +33,7 @@ public class EditModel : PageModel
         var existing = await _db.Subscribers.FirstOrDefaultAsync(x => x.Id == Subscriber.Id);
         if (existing == null) return RedirectToPage("Index");
         existing.ChatId = Subscriber.ChatId;
-        existing.DeviceId = Subscriber.DeviceId;
+        existing.DeviceId = string.IsNullOrWhiteSpace(Subscriber.DeviceId) ? null : Subscriber.DeviceId;
         existing.IsActive = Subscriber.IsActive;
         await _db.SaveChangesAsync();
         return RedirectToPage("Index");

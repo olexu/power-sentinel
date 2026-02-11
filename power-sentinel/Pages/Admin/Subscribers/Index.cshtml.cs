@@ -16,6 +16,6 @@ public class IndexModel : PageModel
 
     public async Task OnGetAsync()
     {
-        Subscribers = await _db.Subscribers.OrderByDescending(s => s.CreatedAt).ToListAsync();
+        Subscribers = await _db.Subscribers.OrderBy(s => s.DeviceId).ThenBy(s => s.IsActive).ToListAsync();
     }
 }

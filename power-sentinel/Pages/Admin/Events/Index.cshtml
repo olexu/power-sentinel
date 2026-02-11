@@ -114,27 +114,28 @@
                                 }
                             </div>
                         </div>
+                    </div>
 
-                        <script>
-                            (function () {
-                                const filter = document.getElementById('deviceFilterSelect');
-                                const exportBtn = document.getElementById('exportBtn');
-                                const hiddenForm = document.getElementById('hiddenExportForm');
-                                const hiddenInput = document.getElementById('hiddenExportDevice');
-                                if (!filter || !exportBtn || !hiddenForm || !hiddenInput) return;
+                    <script>
+                        (function () {
+                            const filter = document.getElementById('deviceFilterSelect');
+                            const exportBtn = document.getElementById('exportBtn');
+                            const hiddenForm = document.getElementById('hiddenExportForm');
+                            const hiddenInput = document.getElementById('hiddenExportDevice');
+                            if (!filter || !exportBtn || !hiddenForm || !hiddenInput) return;
 
-                                const update = () => {
-                                    const enabled = !!filter.value;
-                                    exportBtn.disabled = !enabled;
-                                };
+                            const update = () => {
+                                const enabled = !!filter.value;
+                                exportBtn.disabled = !enabled;
+                            };
 
-                                filter.addEventListener('change', update);
-                                update();
+                            filter.addEventListener('change', update);
+                            update();
 
-                                exportBtn.addEventListener('click', function () {
-                                    if (!filter.value) return;
-                                    hiddenInput.value = filter.value;
-                                    hiddenForm.submit();
-                                });
-                            })();
-                        </script>
+                            exportBtn.addEventListener('click', function () {
+                                if (!filter.value) return;
+                                hiddenInput.value = filter.value;
+                                hiddenForm.submit();
+                            });
+                        })();
+                    </script>
