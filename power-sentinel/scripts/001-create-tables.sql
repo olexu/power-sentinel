@@ -6,7 +6,8 @@ CREATE TABLE IF NOT EXISTS devices (
   id TEXT PRIMARY KEY NOT NULL,
   description TEXT,
   heartbeat_key TEXT,
-  heartbeat_at DATETIME
+  heartbeat_ttl_seconds INTEGER NOT NULL,
+  heartbeat_last_at DATETIME
 );
 
 CREATE TABLE IF NOT EXISTS events (

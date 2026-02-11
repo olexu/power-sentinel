@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-HEARTBEAT_URL="https://your.server/heartbeat?deviceId=deviceId"
+HEARTBEAT_URL="https://your.server/heartbeat/deviceId"
 HEARTBEAT_KEY="HeartbeatKey"
-INTERVAL_SECONDS="10"
+INTERVAL_SECONDS="20"
 
 headers=( -H "Heartbeat-Key: $HEARTBEAT_KEY" )
 

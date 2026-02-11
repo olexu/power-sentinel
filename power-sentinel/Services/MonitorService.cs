@@ -26,7 +26,6 @@ public class MonitorService : BackgroundService
             try
             {
                 var now = DateTime.Now;
-                var heartbeatCheckTime = now.AddSeconds(-_configuration.GetValue("Monitor:HeartbeatAliveSeconds", 15));
 
                 using var scope = _services.CreateScope();
                 var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
@@ -34,7 +33,7 @@ public class MonitorService : BackgroundService
                 var devices = await db.Devices.ToListAsync(stoppingToken);
                 foreach (var device in devices)
                 {
-                    var isPowerOn = device.Heartbeat.HasValue && device.Heartbeat >= heartbeatCheckTime;
+                    var isPowerOn = device.HeartbeatLastAt.HasValue && device.HeartbeatLastAt >= now.AddSeconds(-device.HeartbeatTtlSeconds);
 
                     var latestDeviceEvent = await db.Events
                         .Where(e => e.DeviceId == device.Id)

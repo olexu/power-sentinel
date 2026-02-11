@@ -30,7 +30,8 @@ public class EditModel : PageModel
         var existing = await _db.Devices.FirstOrDefaultAsync(x => x.Id == Device.Id);
         if (existing == null) return RedirectToPage("Index");
         existing.Description = Device.Description;
-        existing.Heartbeat = Device.Heartbeat;
+        existing.HeartbeatLastAt = Device.HeartbeatLastAt;
+        existing.HeartbeatTtlSeconds = Device.HeartbeatTtlSeconds;
         existing.HeartbeatKey = Device.HeartbeatKey;
         await _db.SaveChangesAsync();
         return RedirectToPage("Index");

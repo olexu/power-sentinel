@@ -16,9 +16,12 @@ public class Device
     [StringLength(128)]
     public string? HeartbeatKey { get; set; }
 
-    [Column("heartbeat_at")]
+    [Column("heartbeat_ttl_seconds")]
+    public int HeartbeatTtlSeconds { get; set; } = 60;
+
+    [Column("heartbeat_last_at")]
     [DisplayFormat(DataFormatString = "{0:yyyy-MM-ddTHH:mm:ss}", ApplyFormatInEditMode = true)]
-    public DateTime? Heartbeat { get; set; }
+    public DateTime? HeartbeatLastAt { get; set; }
 
     public ICollection<Event> Events { get; set; } = new List<Event>();
 }

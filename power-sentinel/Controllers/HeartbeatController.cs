@@ -18,8 +18,8 @@ public class HeartbeatController : ControllerBase
         _configuration = configuration;
     }
 
-    [HttpPost]
-    public async Task<IActionResult> Post([FromQuery] string deviceId)
+    [HttpPost("{deviceId}")]
+    public async Task<IActionResult> Post(string deviceId)
     {
         if (string.IsNullOrWhiteSpace(deviceId))
             return BadRequest("DeviceId is required");
@@ -42,7 +42,7 @@ public class HeartbeatController : ControllerBase
             }
         }
 
-        device.Heartbeat = DateTime.Now;
+        device.HeartbeatLastAt = DateTime.Now;
         await _db.SaveChangesAsync(HttpContext.RequestAborted);
         return Ok();
     }

@@ -17,9 +17,15 @@
     </div>
 
     <div>
-        <label asp-for="Device.Heartbeat" class="block mb-1">Heartbeat</label>
-        <input asp-for="Device.Heartbeat" type="datetime-local" class="border rounded p-2 w-full bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100" />
-        <span asp-validation-for="Device.Heartbeat" class="text-red-600 text-sm"></span>
+        <label asp-for="Device.HeartbeatLastAt" class="block mb-1">Last Heartbeat At</label>
+        <input asp-for="Device.HeartbeatLastAt" type="datetime-local" class="border rounded p-2 w-full bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100" />
+        <span asp-validation-for="Device.HeartbeatLastAt" class="text-red-600 text-sm"></span>
+    </div>
+
+    <div>
+        <label asp-for="Device.HeartbeatTtlSeconds" class="block mb-1">Heartbeat TTL (seconds)</label>
+        <input asp-for="Device.HeartbeatTtlSeconds" type="number" min="1" class="border rounded p-2 w-full bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100" />
+        <span asp-validation-for="Device.HeartbeatTtlSeconds" class="text-red-600 text-sm"></span>
     </div>
 
     <div>

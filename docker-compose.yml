@@ -15,7 +15,6 @@ services:
       - ASPNETCORE_ENVIRONMENT=Production
       - PublicUrl=
       - TelegramBotToken=
-      - Monitor__IntervalSeconds=15
-      - Monitor__HeartbeatAliveSeconds=15
+      - MonitorIntervalSeconds=20
       - Admin__Username=
       - Admin__Password=
