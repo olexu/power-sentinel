@@ -17,6 +17,7 @@ public class Device
     public string? HeartbeatKey { get; set; }
 
     [Column("heartbeat_at")]
+    [DisplayFormat(DataFormatString = "{0:yyyy-MM-ddTHH:mm:ss}", ApplyFormatInEditMode = true)]
     public DateTime? Heartbeat { get; set; }
 
     public ICollection<Event> Events { get; set; } = new List<Event>();
